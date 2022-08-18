@@ -30,13 +30,13 @@ To write the file contents to a file or into a directory, use the --output flag.
 			return utils.ErrSilent
 		}
 
-		outpath, err := cmd.Flags().GetString("output")
+		outPath, err := cmd.Flags().GetString("output")
 		if err != nil {
 			cmd.PrintErrln(err)
 			return utils.ErrSilent
 		}
 
-		if stdout && outpath != "" {
+		if stdout && outPath != "" {
 			cmd.PrintErrln("error: flag `output` is mutually exclusive with flag `stdout`")
 			cmd.Usage()
 			return utils.ErrSilent
@@ -69,23 +69,23 @@ To write the file contents to a file or into a directory, use the --output flag.
 			return nil
 		}
 
-		if outpath == "" {
+		if outPath == "" {
 			if err = utils.AFS.WriteFile(filepath.Join(utils.Wd, "grab.hcl"), buffer.Bytes(), os.ModePerm); err != nil {
 				cmd.PrintErrf("could not write config to file: %v\n", err)
 				return utils.ErrSilent
 			}
 		} else {
-			fileInfo, err := utils.Fs.Stat(outpath)
+			fileInfo, err := utils.Fs.Stat(outPath)
 			if err != nil {
 				cmd.PrintErrf("could not get file info for output path: %v\n", err)
 				return utils.ErrSilent
 			}
 
 			if fileInfo.IsDir() {
-				outpath = filepath.Join(outpath, "grab.hcl")
+				outPath = filepath.Join(outPath, "grab.hcl")
 			}
 
-			if err = utils.AFS.WriteFile(outpath, buffer.Bytes(), os.ModePerm); err != nil {
+			if err = utils.AFS.WriteFile(outPath, buffer.Bytes(), os.ModePerm); err != nil {
 				cmd.PrintErrf("could not write config to file: %v\n", err)
 				return utils.ErrSilent
 			}

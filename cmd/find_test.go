@@ -74,10 +74,10 @@ func TestFindCmd(t *testing.T) {
 		},
 	}
 
+	args := []string{"config", "find"}
+
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			args := []string{"config", "find"}
-
 			func() {
 				utils.Wd = tt.Wd
 			}()
