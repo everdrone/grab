@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -218,11 +217,6 @@ https://more.com?foo=bar#baz
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			Wd = filepath.Join(root)
-
-			fmt.Println("--------------")
-			fmt.Println("wd", Wd)
-			fmt.Println(filepath.Join("tmp", "list.ini"))
-			fmt.Println("--------------")
 
 			got, diags := GetURLsFromArgs(test.Args)
 
