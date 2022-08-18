@@ -1,0 +1,32 @@
+{
+  "types": [
+    {
+      "type": "feat",
+      "section": "Features"
+    },
+    {
+      "type": "fix",
+      "section": "Bug Fixes"
+    },
+    {
+      "type": "test",
+      "section": "Tests"
+    },
+    {
+      "type": "build",
+      "section": "Build System",
+      "hidden": true
+    }
+  ],
+  "bumpFiles": [
+    {
+      "filename": "./internal/config/info.go",
+      "updater": "./scripts/standard-version-updater.js"
+    }
+  ],
+  "skip": {
+    "bump": false,
+    "commit": false,
+    "tag": false
+  }
+}

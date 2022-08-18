@@ -1,0 +1,5 @@
+# Ignore docs for github linguis
+t
+docs/** linguist-documentation
+*.gtpl linguist-language=go
+# scripts/*.js linguist-vendored

@@ -1,0 +1,18 @@
+name: Purge
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [Release, Test]
+    types: [completed]
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Purge
+        if: runner.os == 'Linux'
+        run: |
+          curl -s https://github.com/${{ github.event.repository.owner.login }}/${{ github.event.repository.name }}/blob/main/README.md > readme.md.tmp
+          grep -Eo '<img src="[^"]+"' readme.md.tmp | grep camo | grep -Eo 'https[^"]+' | xargs -I {} curl -w "\n" -s -X PURGE {}
