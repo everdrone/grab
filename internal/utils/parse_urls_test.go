@@ -10,6 +10,37 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+func TestIsValidURL(t *testing.T) {
+	tests := []struct {
+		URL  string
+		Want bool
+		Name string
+	}{
+		{URL: "", Want: false, Name: "empty"},
+		{URL: "/foo/bar", Want: false, Name: "unix absolute path"},
+		{URL: "://foo/bar", Want: false, Name: "no scheme"},
+		{URL: "https://foo/bar", Want: true, Name: "no dot com ssl"},
+		{URL: "tcp://foo/bar", Want: true, Name: "tcp no dot com"},
+		{URL: "https://foo.com/bar", Want: true, Name: "valid ssl"},
+		{URL: "tcp://foo.com/bar", Want: true, Name: "valid tcp"},
+		{URL: "c:\\windows\\bad", Want: false, Name: "windows absolute"},
+		{URL: "\\unix\\good", Want: false, Name: "windows absolute without drive"},
+		{URL: "unix\\good", Want: false, Name: "windows relative"},
+		{URL: "foo/bar", Want: false, Name: "unix relative"},
+		{URL: "../foo/bar", Want: false, Name: "unix relative parent"},
+		{URL: "~/foo/bar", Want: false, Name: "unix home directory"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			_, got := IsValidURL(tt.URL)
+			if got != tt.Want {
+				t.Errorf("got: %v, want: %v", got, tt.Want)
+			}
+		})
+	}
+}
+
 func TestParseURLList(t *testing.T) {
 	tests := []struct {
 		Name      string

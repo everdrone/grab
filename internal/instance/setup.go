@@ -88,12 +88,15 @@ func (s *Grab) ParseConfig() *hcl.Diagnostics {
 
 func (s *Grab) ParseURLs(args []string) *hcl.Diagnostics {
 	// gather urls from positional args
+	args = utils.Unique(args)
+
 	urls, diags := utils.GetURLsFromArgs(args)
 	if diags.HasErrors() {
 		return &diags
 	}
 
-	s.URLs = urls
+	s.URLs = utils.Unique(urls)
+
 	return &hcl.Diagnostics{}
 }
 

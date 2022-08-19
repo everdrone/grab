@@ -52,6 +52,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestParseFlags(t *testing.T) {
+	// TODO: refactor!
 	t.Run("parse quiet", func(tc *testing.T) {
 		mock := createMockGetCmd()
 		g := New(mock)
@@ -91,7 +92,6 @@ func TestParseConfig(t *testing.T) {
 	}()
 
 	root := utils.GetOSRoot()
-
 	homedir, _ := homedir.Dir()
 
 	tests := []struct {
@@ -302,7 +302,7 @@ site "example" {
 			diags := g.ParseConfig()
 
 			if diags.HasErrors() != tt.WantErr {
-				tc.Errorf("got: %v, want: %v", diags, tt.WantErr)
+				tc.Errorf("got: %v, want errors: %v", diags, tt.WantErr)
 			}
 
 			// do not check other outputs if we got errors
@@ -313,6 +313,128 @@ site "example" {
 
 				if !reflect.DeepEqual(g.RegexCache, tt.WantRegexCache) {
 					tc.Errorf("got: %+v, want: %+v", g.RegexCache, tt.WantRegexCache)
+				}
+			}
+		})
+	}
+}
+
+func TestParseURLs(t *testing.T) {
+	initialWd, _ := os.Getwd()
+	defer func() {
+		_ = os.Chdir(initialWd)
+	}()
+	root := utils.GetOSRoot()
+
+	// create file system
+	utils.SetupMemMapFs(root)
+	utils.AFS.MkdirAll(filepath.Join(root, "test"), os.ModePerm)
+	utils.AFS.WriteFile(filepath.Join(root, "test", "list.ini"), []byte(`# https://ignore.me.com/image1
+https://example.com/gallery/test
+   http://example.com/g2
+; ignore this as well
+`), os.ModePerm)
+	utils.AFS.WriteFile(filepath.Join(root, "invalid.ini"), []byte(`; comment
+1https://example.com/gallery/test
+# comment 2
+`), os.ModePerm)
+
+	tests := []struct {
+		Name     string
+		Wd       string
+		Args     []string
+		WantURLs []string
+		WantErr  bool
+	}{
+		{
+			// this case should not happen since we require at least one argument
+			Name:     "no args",
+			Wd:       root,
+			Args:     []string(nil),
+			WantURLs: []string(nil),
+			WantErr:  false,
+		},
+		{
+			Name:     "one url",
+			Wd:       root,
+			Args:     []string{"https://example.com/gallery/test"},
+			WantURLs: []string{"https://example.com/gallery/test"},
+			WantErr:  false,
+		},
+		{
+			Name:     "more urls",
+			Wd:       root,
+			Args:     []string{"https://example.com/gallery/test", "https://example.com/gallery/test2"},
+			WantURLs: []string{"https://example.com/gallery/test", "https://example.com/gallery/test2"},
+			WantErr:  false,
+		},
+		{
+			Name:     "duplicate urls",
+			Wd:       root,
+			Args:     []string{"https://example.com/gallery/test", "https://example.com/gallery/test"},
+			WantURLs: []string{"https://example.com/gallery/test"},
+			WantErr:  false,
+		},
+		{
+			Name:     "one file",
+			Wd:       root,
+			Args:     []string{filepath.Join(root, "test", "list.ini")},
+			WantURLs: []string{"https://example.com/gallery/test", "http://example.com/g2"},
+			WantErr:  false,
+		},
+		{
+			Name:     "duplicate files",
+			Wd:       root,
+			Args:     []string{filepath.Join(root, "test", "list.ini"), filepath.Join(root, "test", "list.ini")},
+			WantURLs: []string{"https://example.com/gallery/test", "http://example.com/g2"},
+			WantErr:  false,
+		},
+		{
+			Name:     "urls and files",
+			Wd:       root,
+			Args:     []string{"http://example.com/1", filepath.Join(root, "test", "list.ini")},
+			WantURLs: []string{"http://example.com/1", "https://example.com/gallery/test", "http://example.com/g2"},
+			WantErr:  false,
+		},
+		{
+			Name:     "url is also in file",
+			Wd:       root,
+			Args:     []string{"https://example.com/gallery/test", filepath.Join(root, "test", "list.ini")},
+			WantURLs: []string{"https://example.com/gallery/test", "http://example.com/g2"},
+			WantErr:  false,
+		},
+		{
+			Name:     "invalid url in file",
+			Wd:       root,
+			Args:     []string{filepath.Join(root, "invalid.ini")},
+			WantURLs: []string(nil),
+			WantErr:  true,
+		},
+		{
+			Name:     "file not found",
+			Wd:       root,
+			Args:     []string{filepath.Join(root, "notFound.ini")},
+			WantURLs: []string(nil),
+			WantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Name, func(tc *testing.T) {
+			func() {
+				utils.Wd = tt.Wd
+			}()
+
+			mock := createMockGetCmd()
+			g := New(mock)
+
+			diags := g.ParseURLs(tt.Args)
+			if diags.HasErrors() != tt.WantErr {
+				tc.Errorf("got: %v, want errors: %v", diags, tt.WantErr)
+			}
+			if !diags.HasErrors() {
+				if !reflect.DeepEqual(g.URLs, tt.WantURLs) {
+					tc.Errorf("got: %+v, want: %+v", g.URLs, tt.WantURLs)
 				}
 			}
 		})
