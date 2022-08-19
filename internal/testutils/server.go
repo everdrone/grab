@@ -54,6 +54,8 @@ const htmlPage string = `<!DOCTYPE html>
     <img src="{{ .Base }}/not-found/b.jpg" />
     <img src="{{ .Base }}/not-found/c.jpg" />
   </div>
+  <a href="{{ .Base }}/broken/1.jpg">absolutely broken</a>
+  <a href="/broken/2.jpg">relatively broken</a>
 </body>
 </html>`
 
@@ -78,7 +80,7 @@ func CreateMockServer() *echo.Echo {
 		return c.NoContent(http.StatusNotFound)
 	})
 
-	e.GET("/broken", func(c echo.Context) error {
+	e.GET("/broken/:id", func(c echo.Context) error {
 		// will cause a reading error
 		c.Response().Header().Set("Content-Length", "1")
 		return c.NoContent(http.StatusOK)
@@ -177,7 +179,7 @@ site "example" {
 	}
 
 	asset "secure" {
-		pattern = "<img src=\"([^\"]+)"
+		pattern = "<img src=\"([^\"]+/secure/[^\"]+)"
 		capture = 1
 		find_all = true
 

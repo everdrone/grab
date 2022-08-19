@@ -100,7 +100,7 @@ func (s *Grab) Download() *hcl.Diagnostics {
 
 				// check if file exists
 				performWrite := true
-				if exists, err := utils.AFS.Exists(dst); err == nil || exists {
+				if exists, err := utils.AFS.Exists(dst); err != nil || exists {
 					performWrite = false
 				}
 
@@ -113,6 +113,7 @@ func (s *Grab) Download() *hcl.Diagnostics {
 					}})
 
 					if err := net.Download(src, dst, options); err != nil {
+						// FIXME: this should be appended and returned when the function finishes if not in strict mode
 						diags := &hcl.Diagnostics{{
 							Severity: hcl.DiagError,
 							Summary:  "Failed to download asset",

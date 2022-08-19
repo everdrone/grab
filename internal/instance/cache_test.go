@@ -115,7 +115,7 @@ func TestBuildSiteCache(t *testing.T) {
 // it does test the functionality of cache.go but it's very very messy.
 // it should be refactored.
 func TestBuildAssetCache(t *testing.T) {
-	testPath := `/gallery/123/test?id=123`
+	testPath := `/gallery/123/test?id=543`
 	root := testutils.GetOSRoot()
 	globalLocation := filepath.Join(root, "global")
 
@@ -222,6 +222,43 @@ site "example" {
 						Assets: []config.AssetConfig{
 							{
 								Downloads: nil,
+							},
+						},
+					},
+				},
+			},
+			WantErr: false,
+		},
+		{
+			Name:  "find one asset",
+			Flags: &FlagsState{},
+			URLs:  []string{ts.URL + testPath},
+			Config: `
+global {
+	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+}
+
+site "example" {
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
+	asset "image" {
+		pattern = "<img src=\"([^\"]+/img/[^\"]+)"
+		capture = 1
+		find_all = false
+	}
+}`,
+			Want: &config.Config{
+				Sites: []config.SiteConfig{
+					{
+						Assets: []config.AssetConfig{
+							{
+								Downloads: map[string]string{
+									ts.URL + "/img/a.jpg": filepath.Join(globalLocation, "example", "a.jpg"),
+								},
+							},
+						},
+						InfoMap: map[string]map[string]string{
+							filepath.Join(globalLocation, "example"): {
+								"url": ts.URL + testPath,
 							},
 						},
 					},
