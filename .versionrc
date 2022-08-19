@@ -10,7 +10,8 @@
     },
     {
       "type": "test",
-      "section": "Tests"
+      "section": "Tests",
+      "hidden": true
     },
     {
       "type": "build",
