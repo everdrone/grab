@@ -67,9 +67,7 @@ func (s *Grab) ParseConfig() *hcl.Diagnostics {
 	s.RegexCache = regexCache
 
 	// get global location
-	if filepath.IsAbs(s.Config.Global.Location) {
-		s.Config.Global.Location = s.Config.Global.Location
-	} else {
+	if !filepath.IsAbs(s.Config.Global.Location) {
 		expanded, err := homedir.Expand(s.Config.Global.Location)
 		if err != nil {
 			return &hcl.Diagnostics{{
