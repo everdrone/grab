@@ -28,7 +28,7 @@ type SiteConfig struct {
 	// computed
 	URLs       []string
 	InfoMap    InfoCacheMap // location -> info -> value
-	HasMatches bool
+	HasMatches bool         // does the site download anything?
 }
 
 type SubdirectoryConfig struct {

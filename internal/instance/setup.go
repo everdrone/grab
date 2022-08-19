@@ -99,18 +99,3 @@ func (s *Grab) ParseURLs(args []string) *hcl.Diagnostics {
 
 	return &hcl.Diagnostics{}
 }
-
-func (s *Grab) BuildSiteCache() {
-	for _, url := range s.URLs {
-		for i, site := range s.Config.Sites {
-			if s.RegexCache[site.Test].MatchString(url) {
-				if s.Config.Sites[i].URLs == nil {
-					s.Config.Sites[i].URLs = make([]string, 0)
-				}
-
-				s.Config.Sites[i].URLs = append(s.Config.Sites[i].URLs, url)
-				break
-			}
-		}
-	}
-}

@@ -94,18 +94,18 @@ https://example.com
 		},
 		{
 			Name:      "invalid url",
-			Input:     `not-an-url hehe`,
+			Input:     `not-an-url lol`,
 			Want:      nil,
 			HasErrors: true,
 			WantDiags: hcl.Diagnostics{
 				&hcl.Diagnostic{
 					Severity: hcl.DiagError,
 					Summary:  "Invalid URL",
-					Detail:   "The string 'not-an-url hehe' is not a valid url.",
+					Detail:   "The string 'not-an-url lol' is not a valid url.",
 					Subject: &hcl.Range{
 						Filename: "list.txt",
 						Start:    hcl.Pos{Line: 1, Column: 1},
-						End:      hcl.Pos{Line: 1, Column: len("not-an-url hehe") + 1},
+						End:      hcl.Pos{Line: 1, Column: len("not-an-url lol") + 1},
 					},
 				},
 			},
