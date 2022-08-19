@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/spf13/afero"
@@ -67,4 +68,12 @@ func SetupMemMapFs(root string) {
 	Fs = afero.NewMemMapFs()
 	AFS = &afero.Afero{Fs: Fs}
 	Wd = root
+}
+
+func EscapeHCLString(s string) string {
+	// this does not account for double quote escapes
+	// if the string contains \" it will be escaped as \\" and will probably result in an invalid hcl
+	// if the string contains \\ it will be escaped as \\\\
+	// if the string contains \n it will be escaped as \\n
+	return strings.Replace(s, "\\", "\\\\", -1)
 }

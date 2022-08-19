@@ -111,7 +111,7 @@ func TestParseConfig(t *testing.T) {
 			ConfigFilePath: filepath.Join(root, "test", "grab.hcl"),
 			Config: `
 global {
-	location = "` + filepath.Join(root, "home", "user", "downloads") + `"
+	location = "` + utils.EscapeHCLString(filepath.Join(root, "home", "user", "downloads")) + `"
 }
 
 site "example" {
@@ -153,7 +153,7 @@ site "example" {
 			ConfigFilePath: filepath.Join(root, "test", "grab.hcl"),
 			Config: `
 global {
-	location = "` + filepath.Join("~", "Downloads", "grab") + `"
+	location = "` + utils.EscapeHCLString(filepath.Join("~", "Downloads", "grab")) + `"
 }
 
 site "example" {
@@ -195,7 +195,7 @@ site "example" {
 			ConfigFilePath: filepath.Join(root, "test", "grab.hcl"),
 			Config: `
 global {
-	location = "` + filepath.Join("..", "expandMe") + `"
+	location = "` + utils.EscapeHCLString(filepath.Join("..", "expandMe")) + `"
 }
 
 site "example" {
