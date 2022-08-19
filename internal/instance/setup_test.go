@@ -1,8 +1,15 @@
 package instance
 
 import (
+	"os"
+	"path/filepath"
+	"reflect"
+	"regexp"
 	"testing"
 
+	"github.com/everdrone/grab/internal/config"
+	"github.com/everdrone/grab/internal/utils"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )
 
@@ -77,14 +84,237 @@ func TestParseFlags(t *testing.T) {
 	})
 }
 
-// func TestParseConfig(t *testing.T) {
-// 	t.Fail()
-// }
+func TestParseConfig(t *testing.T) {
+	initialWd, _ := os.Getwd()
+	defer func() {
+		_ = os.Chdir(initialWd)
+	}()
 
-// func TestParseURLs(t *testing.T) {
-// 	t.Fail()
-// }
+	root := utils.GetOSRoot()
 
-// func TestBuildSiteCache(t *testing.T) {
-// 	t.Fail()
-// }
+	homedir, _ := homedir.Dir()
+
+	tests := []struct {
+		Name           string
+		Flags          *FlagsState
+		Wd             string
+		ConfigFilePath string
+		Config         string
+		WantConfig     *config.Config
+		WantRegexCache config.RegexCacheMap
+		WantErr        bool
+	}{
+		{
+			Name:           "config ok",
+			Flags:          &FlagsState{},
+			Wd:             filepath.Join(root, "test"),
+			ConfigFilePath: filepath.Join(root, "test", "grab.hcl"),
+			Config: `
+global {
+	location = "` + filepath.Join(root, "home", "user", "downloads") + `"
+}
+
+site "example" {
+	test = "testPattern"
+
+	asset "image" {
+		pattern = "assetPattern"
+		capture = 0
+	}
+}`,
+			WantConfig: &config.Config{
+				Global: config.GlobalConfig{
+					Location: filepath.Join(root, "home", "user", "downloads"),
+				},
+				Sites: []config.SiteConfig{
+					{
+						Name: "example",
+						Test: "testPattern",
+						Assets: []config.AssetConfig{
+							{
+								Name:    "image",
+								Pattern: "assetPattern",
+								Capture: "0",
+							},
+						},
+					},
+				},
+			},
+			WantRegexCache: config.RegexCacheMap{
+				"assetPattern": regexp.MustCompile("assetPattern"),
+				"testPattern":  regexp.MustCompile("testPattern"),
+			},
+			WantErr: false,
+		},
+		{
+			Name:           "expands home directory",
+			Flags:          &FlagsState{},
+			Wd:             filepath.Join(root, "test"),
+			ConfigFilePath: filepath.Join(root, "test", "grab.hcl"),
+			Config: `
+global {
+	location = "` + filepath.Join("~", "Downloads", "grab") + `"
+}
+
+site "example" {
+	test = "testPattern"
+
+	asset "image" {
+		pattern = "assetPattern"
+		capture = 0
+	}
+}`,
+			WantConfig: &config.Config{
+				Global: config.GlobalConfig{
+					Location: filepath.Join(homedir, "Downloads", "grab"),
+				},
+				Sites: []config.SiteConfig{
+					{
+						Name: "example",
+						Test: "testPattern",
+						Assets: []config.AssetConfig{
+							{
+								Name:    "image",
+								Pattern: "assetPattern",
+								Capture: "0",
+							},
+						},
+					},
+				},
+			},
+			WantRegexCache: config.RegexCacheMap{
+				"assetPattern": regexp.MustCompile("assetPattern"),
+				"testPattern":  regexp.MustCompile("testPattern"),
+			},
+			WantErr: false,
+		},
+		{
+			Name:           "expands relative path",
+			Flags:          &FlagsState{},
+			Wd:             filepath.Join(root, "test"),
+			ConfigFilePath: filepath.Join(root, "test", "grab.hcl"),
+			Config: `
+global {
+	location = "` + filepath.Join("..", "expandMe") + `"
+}
+
+site "example" {
+	test = "testPattern"
+
+	asset "image" {
+		pattern = "assetPattern"
+		capture = 0
+	}
+}`,
+			WantConfig: &config.Config{
+				Global: config.GlobalConfig{
+					Location: filepath.Join(root, "expandMe"),
+				},
+				Sites: []config.SiteConfig{
+					{
+						Name: "example",
+						Test: "testPattern",
+						Assets: []config.AssetConfig{
+							{
+								Name:    "image",
+								Pattern: "assetPattern",
+								Capture: "0",
+							},
+						},
+					},
+				},
+			},
+			WantRegexCache: config.RegexCacheMap{
+				"assetPattern": regexp.MustCompile("assetPattern"),
+				"testPattern":  regexp.MustCompile("testPattern"),
+			},
+			WantErr: false,
+		},
+		{
+			Name:           "config not found",
+			Flags:          &FlagsState{},
+			Wd:             filepath.Join(root, "test"),
+			ConfigFilePath: filepath.Join(root, "test", "deeper", "grab.hcl"),
+			Config:         "",
+			WantConfig:     nil,
+			WantRegexCache: config.RegexCacheMap(nil),
+			WantErr:        true,
+		},
+		{
+			Name:           "invalid config",
+			Flags:          &FlagsState{},
+			Wd:             filepath.Join(root, "test"),
+			ConfigFilePath: filepath.Join(root, "test", "grab.hcl"),
+			Config: `
+site "example" {
+	test = "testPattern"
+
+	asset "image" {
+		pattern = "assetPattern"
+		capture = 0
+	}
+}`,
+			WantConfig:     nil,
+			WantRegexCache: config.RegexCacheMap(nil),
+			WantErr:        true,
+		},
+		{
+			Name:           "cannot expand home directory",
+			Flags:          &FlagsState{},
+			Wd:             filepath.Join(root, "test"),
+			ConfigFilePath: filepath.Join(root, "test", "grab.hcl"),
+			Config: `
+global {
+	location = "` + filepath.Join("~user", "Downloads", "grab") + `"
+}
+
+site "example" {
+	test = "testPattern"
+
+	asset "image" {
+		pattern = "assetPattern"
+		capture = 0
+	}
+}`,
+			WantConfig:     nil,
+			WantRegexCache: config.RegexCacheMap(nil),
+			WantErr:        true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Name, func(tc *testing.T) {
+			// create file system
+			utils.SetupMemMapFs(root)
+			utils.AFS.WriteFile(tt.ConfigFilePath, []byte(tt.Config), os.ModePerm)
+
+			// set working directory
+			func() {
+				utils.Wd = tt.Wd
+			}()
+
+			mock := createMockGetCmd()
+			g := New(mock)
+
+			// set flags
+			g.Flags = tt.Flags
+
+			diags := g.ParseConfig()
+
+			if diags.HasErrors() != tt.WantErr {
+				tc.Errorf("got: %v, want: %v", diags, tt.WantErr)
+			}
+
+			// do not check other outputs if we got errors
+			if !diags.HasErrors() {
+				if !reflect.DeepEqual(g.Config, tt.WantConfig) {
+					tc.Errorf("got: %+v, want: %+v", g.Config, tt.WantConfig)
+				}
+
+				if !reflect.DeepEqual(g.RegexCache, tt.WantRegexCache) {
+					tc.Errorf("got: %+v, want: %+v", g.RegexCache, tt.WantRegexCache)
+				}
+			}
+		})
+	}
+}

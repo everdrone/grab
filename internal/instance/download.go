@@ -75,11 +75,11 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 					if filepath.IsAbs(subDirs[0]) {
 						subdirectory = subDirs[0]
 					} else {
-						subdirectory = filepath.Join(s.GlobalLocation, site.Name, subDirs[0])
+						subdirectory = filepath.Join(s.Config.Global.Location, site.Name, subDirs[0])
 					}
 				}
 			} else {
-				subdirectory = filepath.Join(s.GlobalLocation, site.Name)
+				subdirectory = filepath.Join(s.Config.Global.Location, site.Name)
 			}
 
 			for assetIndex, asset := range site.Assets {
@@ -273,7 +273,7 @@ func (s *Grab) Download() *hcl.Diagnostics {
 			for _, asset := range site.Assets {
 				relativeDownloads := make(map[string]string, 0)
 				for src, dst := range asset.Downloads {
-					rel, _ := filepath.Rel(s.GlobalLocation, dst)
+					rel, _ := filepath.Rel(s.Config.Global.Location, dst)
 					relativeDownloads[src] = rel
 				}
 
