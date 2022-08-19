@@ -27,7 +27,7 @@ func (s *Grab) BuildSiteCache() {
 	}
 }
 
-func getURLBase(str string) (*url.URL, error) {
+func removePathFromURL(str string) (*url.URL, error) {
 	base, err := url.Parse(str)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 	for siteIndex, site := range s.Config.Sites {
 		for _, pageUrl := range site.URLs {
 			// we already checked this url before, so we can skip the error
-			base, _ := getURLBase(pageUrl)
+			base, _ := removePathFromURL(pageUrl)
 
 			options := net.MergeFetchOptionsChain(s.Config.Global.Network, site.Network)
 
@@ -57,6 +57,8 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 				Summary:  "Fetching page",
 				Detail:   pageUrl,
 			}})
+
+			// MARK: - get the page body
 
 			body, err := net.Fetch(pageUrl, options)
 			if err != nil {
@@ -74,8 +76,12 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 				}
 			}
 
+			// MARK: - get the destination path (subdirectory)
+
 			var subdirectory string
 			if site.Subdirectory != nil {
+				// we have a subdirectory block
+
 				var source string
 				if site.Subdirectory.From == "url" {
 					source = pageUrl
@@ -101,8 +107,11 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 					}
 				}
 			} else {
+				// we have no subdirectory block, just use the site name
 				subdirectory = filepath.Join(s.Config.Global.Location, site.Name)
 			}
+
+			// MARK: - loop through the asset blocks
 
 			for assetIndex, asset := range site.Assets {
 				// match against body
@@ -112,7 +121,7 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 						findAll = *asset.FindAll
 					}
 
-					// get captures
+					// get capture groups
 					captures, err := utils.GetCaptures(s.RegexCache[asset.Pattern], findAll, asset.Capture, body)
 					if err != nil {
 						return &hcl.Diagnostics{{
@@ -127,11 +136,14 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 
 					// MARK: - Transform url
 
+					// TODO: we should change the config schema to store transforms as a map
+					// where the key is the transform label, so we don't end up looping through an array
 					transformUrl := utils.Filter(asset.Transforms, func(t config.TransformConfig) bool {
 						return t.Name == "url"
 					})
 
 					if len(transformUrl) > 0 {
+						// we have a transform url block
 						t := transformUrl[0]
 						for i, src := range captures {
 							captures[i] = s.RegexCache[t.Pattern].ReplaceAllString(src, t.Replace)
@@ -147,6 +159,7 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 					destinations := make(map[string]string, 0)
 
 					if len(transformFilename) > 0 {
+						// we have a transform filename block
 						t := transformFilename[0]
 						for _, src := range captures {
 							fileName := s.RegexCache[t.Pattern].ReplaceAllString(src, t.Replace)
@@ -159,6 +172,7 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 								destinations[src] = filepath.Join(subdirectory, fileName)
 							}
 
+							// unescape the filename to write on disk
 							unescaped, err := url.QueryUnescape(destinations[src])
 							if err != nil {
 								return &hcl.Diagnostics{{
@@ -171,10 +185,13 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 							destinations[src] = unescaped
 						}
 					} else {
+						// we don't have any transform filename blocks
 						for _, src := range captures {
+							// simply get the filename from the url path
 							fileName := filepath.Base(src)
 							destinations[src] = filepath.Join(subdirectory, fileName)
 
+							// unescape the filename to write on disk
 							unescaped, err := url.QueryUnescape(destinations[src])
 							if err != nil {
 								return &hcl.Diagnostics{{
@@ -188,9 +205,9 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 						}
 					}
 
-					resolvedDestinations := make(map[string]string, 0)
+					// MARK: - loop through the map to check for relative urls
 
-					// if path is still relative, append it to the scheme://domain.name of the page
+					resolvedDestinations := make(map[string]string, 0)
 					for src, dst := range destinations {
 						parsed, err := url.Parse(src)
 						if err != nil {
@@ -201,6 +218,7 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 							}}
 						}
 
+						// if path is still relative, append it to the scheme://domain.name of the page
 						if !parsed.IsAbs() {
 							resolved, err := base.Parse(src)
 							if err != nil {
@@ -219,6 +237,7 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 
 							resolvedDestinations[resolved.String()] = dst
 						} else {
+							// nothing to do, the url is already absolute
 							resolvedDestinations[src] = dst
 						}
 					}
@@ -244,10 +263,12 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 
 			// MARK: - Indexing
 
+			// store the url and the timestamp by default
 			infoMap := make(map[string]string, 0)
 			infoMap["url"] = pageUrl
 			infoMap["timestamp"] = time.Now().UTC().Format(time.RFC3339Nano)
 
+			// loop through index blocks
 			for _, info := range site.Infos {
 				key := info.Name
 
