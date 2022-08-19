@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/everdrone/grab/internal/config"
+	"github.com/everdrone/grab/internal/testutils"
 	"github.com/everdrone/grab/internal/utils"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -91,7 +92,7 @@ func TestParseConfig(t *testing.T) {
 		_ = os.Chdir(initialWd)
 	}()
 
-	root := utils.GetOSRoot()
+	root := testutils.GetOSRoot()
 	homedir, _ := homedir.Dir()
 
 	tests := []struct {
@@ -111,7 +112,7 @@ func TestParseConfig(t *testing.T) {
 			ConfigFilePath: filepath.Join(root, "test", "grab.hcl"),
 			Config: `
 global {
-	location = "` + utils.EscapeHCLString(filepath.Join(root, "home", "user", "downloads")) + `"
+	location = "` + testutils.EscapeHCLString(filepath.Join(root, "home", "user", "downloads")) + `"
 }
 
 site "example" {
@@ -153,7 +154,7 @@ site "example" {
 			ConfigFilePath: filepath.Join(root, "test", "grab.hcl"),
 			Config: `
 global {
-	location = "` + utils.EscapeHCLString(filepath.Join("~", "Downloads", "grab")) + `"
+	location = "` + testutils.EscapeHCLString(filepath.Join("~", "Downloads", "grab")) + `"
 }
 
 site "example" {
@@ -195,7 +196,7 @@ site "example" {
 			ConfigFilePath: filepath.Join(root, "test", "grab.hcl"),
 			Config: `
 global {
-	location = "` + utils.EscapeHCLString(filepath.Join("..", "expandMe")) + `"
+	location = "` + testutils.EscapeHCLString(filepath.Join("..", "expandMe")) + `"
 }
 
 site "example" {
@@ -285,7 +286,7 @@ site "example" {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(tc *testing.T) {
 			// create file system
-			utils.SetupMemMapFs(root)
+			utils.Fs, utils.AFS, utils.Wd = testutils.SetupMemMapFs(root)
 			utils.AFS.WriteFile(tt.ConfigFilePath, []byte(tt.Config), os.ModePerm)
 
 			// set working directory
@@ -324,10 +325,10 @@ func TestParseURLs(t *testing.T) {
 	defer func() {
 		_ = os.Chdir(initialWd)
 	}()
-	root := utils.GetOSRoot()
+	root := testutils.GetOSRoot()
 
 	// create file system
-	utils.SetupMemMapFs(root)
+	utils.Fs, utils.AFS, utils.Wd = testutils.SetupMemMapFs(root)
 	utils.AFS.MkdirAll(filepath.Join(root, "test"), os.ModePerm)
 	utils.AFS.WriteFile(filepath.Join(root, "test", "list.ini"), []byte(`# https://ignore.me.com/image1
 https://example.com/gallery/test

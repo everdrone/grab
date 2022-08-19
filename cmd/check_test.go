@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/everdrone/grab/internal/testutils"
 	"github.com/everdrone/grab/internal/utils"
 )
 
@@ -42,8 +43,8 @@ func TestCheckCmd(t *testing.T) {
 		_ = os.Chdir(initialWd)
 	}()
 
-	root := utils.GetOSRoot()
-	utils.SetupMemMapFs(root)
+	root := testutils.GetOSRoot()
+	utils.Fs, utils.AFS, utils.Wd = testutils.SetupMemMapFs(root)
 
 	utils.Fs.MkdirAll("/other/directory", os.ModePerm)
 	utils.Fs.MkdirAll("/tmp/test/config/nested", os.ModePerm)
@@ -130,7 +131,7 @@ func TestCheckCmd(t *testing.T) {
 				utils.Wd = tt.Wd
 			}()
 
-			c, got, gotErr, err := utils.ExecuteCommandErr(RootCmd, append(args, tt.Args...)...)
+			c, got, gotErr, err := testutils.ExecuteCommandErr(RootCmd, append(args, tt.Args...)...)
 			if err != nil && !tt.HasErrors {
 				t.Errorf("unexpected error: %v", err)
 			}

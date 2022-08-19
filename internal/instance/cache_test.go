@@ -1,7 +1,6 @@
 package instance
 
 import (
-	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"reflect"
@@ -9,8 +8,7 @@ import (
 	"testing"
 
 	"github.com/everdrone/grab/internal/config"
-	"github.com/everdrone/grab/internal/utils"
-	"github.com/labstack/echo/v4"
+	"github.com/everdrone/grab/internal/testutils"
 )
 
 func TestBuildSiteCache(t *testing.T) {
@@ -113,33 +111,25 @@ func TestBuildSiteCache(t *testing.T) {
 	}
 }
 
+// FIXME: from this line down, the code is a mess.
+// it does test the functionality of cache.go but it's very very messy.
+// it should be refactored.
 func TestBuildAssetCache(t *testing.T) {
-	// FIXME: let's create a function and set up an in-memory file server for testing purposes
 	testPath := `/gallery/123/test?id=123`
-	testPage := `example page
-https://example.com/img/test1.jpg
-https://example.com/img/test2.jpg
-https://example.com/img/test3.jpg
-
-https://example.com/video/123abc/small.mp4
-https://example.com/video/def456/small.mp4
-https://example.com/video/ghi789/small.mp4
-
-<img src="/relative/image.jpg" />
-
-name: foo
-description: bar
-`
-
-	root := utils.GetOSRoot()
+	root := testutils.GetOSRoot()
 	globalLocation := filepath.Join(root, "global")
 
 	// create test server
-	e := echo.New()
-	e.GET("/gallery/:id/:name", func(c echo.Context) error {
-		return c.HTML(http.StatusOK, testPage)
-	})
-	ts := httptest.NewServer(e)
+	e := testutils.CreateMockServer()
+
+	// hacky way of getting the same port as echo's listener
+	// see: https://stackoverflow.com/a/42218765
+	ts := httptest.NewUnstartedServer(e)
+
+	ts.Listener.Close()
+	ts.Listener = e.Listener
+	ts.Start()
+
 	defer ts.Close()
 
 	tests := []struct {
@@ -156,7 +146,7 @@ description: bar
 			URLs:  []string{ts.URL + "/notFound"},
 			Config: `
 global {
-	location = "` + utils.EscapeHCLString(globalLocation) + `"
+	location = "` + testutils.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {
@@ -186,7 +176,7 @@ site "example" {
 			URLs:  []string{ts.URL + "/notFound"},
 			Config: `
 global {
-	location = "` + utils.EscapeHCLString(globalLocation) + `"
+	location = "` + testutils.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {
@@ -215,7 +205,7 @@ site "example" {
 			Flags: &FlagsState{},
 			Config: `
 global {
-	location = "` + utils.EscapeHCLString(globalLocation) + `"
+	location = "` + testutils.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {
@@ -245,14 +235,14 @@ site "example" {
 			URLs:  []string{ts.URL + testPath},
 			Config: `
 global {
-	location = "` + utils.EscapeHCLString(globalLocation) + `"
+	location = "` + testutils.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {
-	test = "http://(127\\.0\\.0\\.1|localhost):"
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
 	asset "image" {
-		pattern = "https:\\/\\/example\\.com\\/img\\/\\w+\\.\\w+"
-		capture = 0
+		pattern = "<img src=\"([^\"]+/img/[^\"]+)"
+		capture = 1
 		find_all = true
 	}
 }`,
@@ -262,9 +252,9 @@ site "example" {
 						Assets: []config.AssetConfig{
 							{
 								Downloads: map[string]string{
-									"https://example.com/img/test1.jpg": filepath.Join(globalLocation, "example", "test1.jpg"),
-									"https://example.com/img/test2.jpg": filepath.Join(globalLocation, "example", "test2.jpg"),
-									"https://example.com/img/test3.jpg": filepath.Join(globalLocation, "example", "test3.jpg"),
+									ts.URL + "/img/a.jpg": filepath.Join(globalLocation, "example", "a.jpg"),
+									ts.URL + "/img/b.jpg": filepath.Join(globalLocation, "example", "b.jpg"),
+									ts.URL + "/img/c.jpg": filepath.Join(globalLocation, "example", "c.jpg"),
 								},
 							},
 						},
@@ -279,19 +269,58 @@ site "example" {
 			WantErr: false,
 		},
 		{
-			Name:  "subdirectory",
+			Name:  "relative assets",
 			Flags: &FlagsState{},
 			URLs:  []string{ts.URL + testPath},
 			Config: `
 global {
-	location = "` + utils.EscapeHCLString(globalLocation) + `"
+	location = "` + testutils.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {
-	test = "http://(127\\.0\\.0\\.1|localhost):"
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
 	asset "image" {
-		pattern = "https:\\/\\/example\\.com\\/img\\/\\w+\\.\\w+"
-		capture = 0
+		pattern = "<img src=\"(/img/[^\"]+)"
+		capture = 1
+		find_all = true
+	}
+}`,
+			Want: &config.Config{
+				Sites: []config.SiteConfig{
+					{
+						Assets: []config.AssetConfig{
+							{
+								Downloads: map[string]string{
+									ts.URL + "/img/a.jpg": filepath.Join(globalLocation, "example", "a.jpg"),
+									ts.URL + "/img/b.jpg": filepath.Join(globalLocation, "example", "b.jpg"),
+									ts.URL + "/img/c.jpg": filepath.Join(globalLocation, "example", "c.jpg"),
+								},
+							},
+						},
+						InfoMap: map[string]map[string]string{
+							filepath.Join(globalLocation, "example"): {
+								"url": ts.URL + testPath,
+							},
+						},
+					},
+				},
+			},
+			WantErr: false,
+		},
+		{
+			Name:  "subdirectory from url",
+			Flags: &FlagsState{},
+			URLs:  []string{ts.URL + testPath},
+			Config: `
+global {
+	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+}
+
+site "example" {
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
+	asset "image" {
+		pattern = "<img src=\"([^\"]+/img/[^\"]+)"
+		capture = 1
 		find_all = true
 	}
 
@@ -307,9 +336,9 @@ site "example" {
 						Assets: []config.AssetConfig{
 							{
 								Downloads: map[string]string{
-									"https://example.com/img/test1.jpg": filepath.Join(globalLocation, "example", "123", "test1.jpg"),
-									"https://example.com/img/test2.jpg": filepath.Join(globalLocation, "example", "123", "test2.jpg"),
-									"https://example.com/img/test3.jpg": filepath.Join(globalLocation, "example", "123", "test3.jpg"),
+									ts.URL + "/img/a.jpg": filepath.Join(globalLocation, "example", "123", "a.jpg"),
+									ts.URL + "/img/b.jpg": filepath.Join(globalLocation, "example", "123", "b.jpg"),
+									ts.URL + "/img/c.jpg": filepath.Join(globalLocation, "example", "123", "c.jpg"),
 								},
 							},
 						},
@@ -324,26 +353,26 @@ site "example" {
 			WantErr: false,
 		},
 		{
-			Name:  "absolute subdirectory",
+			Name:  "subdirectory from body",
 			Flags: &FlagsState{},
 			URLs:  []string{ts.URL + testPath},
 			Config: `
 global {
-	location = "` + utils.EscapeHCLString(globalLocation) + `"
+	location = "` + testutils.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {
-	test = "http://(127\\.0\\.0\\.1|localhost):"
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
 	asset "image" {
-		pattern = "https:\\/\\/example\\.com\\/img\\/\\w+\\.\\w+"
-		capture = 0
+		pattern = "<img src=\"([^\"]+/img/[^\"]+)"
+		capture = 1
 		find_all = true
 	}
 
 	subdirectory {
-		pattern = "\\/gallery\\/(\\d+)"
-		capture = 1
-		from = url
+		pattern = "Author: @(?P<username>[^<]+)"
+		capture = "username"
+		from = body
 	}
 }`,
 			Want: &config.Config{
@@ -352,15 +381,188 @@ site "example" {
 						Assets: []config.AssetConfig{
 							{
 								Downloads: map[string]string{
-									"https://example.com/img/test1.jpg": filepath.Join(globalLocation, "example", "123", "test1.jpg"),
-									"https://example.com/img/test2.jpg": filepath.Join(globalLocation, "example", "123", "test2.jpg"),
-									"https://example.com/img/test3.jpg": filepath.Join(globalLocation, "example", "123", "test3.jpg"),
+									ts.URL + "/img/a.jpg": filepath.Join(globalLocation, "example", "everdrone", "a.jpg"),
+									ts.URL + "/img/b.jpg": filepath.Join(globalLocation, "example", "everdrone", "b.jpg"),
+									ts.URL + "/img/c.jpg": filepath.Join(globalLocation, "example", "everdrone", "c.jpg"),
 								},
 							},
 						},
 						InfoMap: map[string]map[string]string{
-							filepath.Join(globalLocation, "example", "123"): {
+							filepath.Join(globalLocation, "example", "everdrone"): {
 								"url": ts.URL + testPath,
+							},
+						},
+					},
+				},
+			},
+			WantErr: false,
+		},
+		{
+			Name:  "transform url",
+			Flags: &FlagsState{},
+			URLs:  []string{ts.URL + testPath},
+			Config: `
+global {
+	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+}
+
+site "example" {
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
+	asset "video" {
+		pattern = "<video src=\"([^\"]+)"
+		capture = 1
+		find_all = true
+
+		transform url {
+			pattern = "(.+)small(.*)"
+			replace = "$${1}large$2"
+		}
+	}
+}`,
+			Want: &config.Config{
+				Sites: []config.SiteConfig{
+					{
+						Assets: []config.AssetConfig{
+							{
+								Downloads: map[string]string{
+									ts.URL + "/video/a/large.mp4": filepath.Join(globalLocation, "example", "large.mp4"),
+									ts.URL + "/video/b/large.mp4": filepath.Join(globalLocation, "example", "large.mp4"),
+									ts.URL + "/video/c/large.mp4": filepath.Join(globalLocation, "example", "large.mp4"),
+								},
+							},
+						},
+						InfoMap: map[string]map[string]string{
+							filepath.Join(globalLocation, "example"): {
+								"url": ts.URL + testPath,
+							},
+						},
+					},
+				},
+			},
+			WantErr: false,
+		},
+		{
+			Name:  "transform filename",
+			Flags: &FlagsState{},
+			URLs:  []string{ts.URL + testPath},
+			Config: `
+global {
+	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+}
+
+site "example" {
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
+	asset "video" {
+		pattern = "<video src=\"([^\"]+)"
+		capture = 1
+		find_all = true
+
+		transform filename {
+			pattern = ".+\\/video\\/(?P<id>\\w+)\\/(\\w+)\\.(?P<extension>\\w+)"
+			replace = "$${id}.$${extension}"
+		}
+	}
+}`,
+			Want: &config.Config{
+				Sites: []config.SiteConfig{
+					{
+						Assets: []config.AssetConfig{
+							{
+								Downloads: map[string]string{
+									ts.URL + "/video/a/small.mp4": filepath.Join(globalLocation, "example", "a.mp4"),
+									ts.URL + "/video/b/small.mp4": filepath.Join(globalLocation, "example", "b.mp4"),
+									ts.URL + "/video/c/small.mp4": filepath.Join(globalLocation, "example", "c.mp4"),
+								},
+							},
+						},
+						InfoMap: map[string]map[string]string{
+							filepath.Join(globalLocation, "example"): {
+								"url": ts.URL + testPath,
+							},
+						},
+					},
+				},
+			},
+			WantErr: false,
+		},
+		{
+			Name:  "transform filename absolute",
+			Flags: &FlagsState{},
+			URLs:  []string{ts.URL + testPath},
+			Config: `
+global {
+	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+}
+
+site "example" {
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
+	asset "video" {
+		pattern = "<video src=\"([^\"]+)"
+		capture = 1
+		find_all = true
+
+		transform filename {
+			pattern = ".+\\/video\\/(?P<id>\\w+)\\/(\\w+)\\.(?P<extension>\\w+)"
+			replace = "` + testutils.EscapeHCLString(root) + `$${id}.$${extension}"
+		}
+	}
+}`,
+			Want: &config.Config{
+				Sites: []config.SiteConfig{
+					{
+						Assets: []config.AssetConfig{
+							{
+								Downloads: map[string]string{
+									ts.URL + "/video/a/small.mp4": filepath.Join(root, "a.mp4"),
+									ts.URL + "/video/b/small.mp4": filepath.Join(root, "b.mp4"),
+									ts.URL + "/video/c/small.mp4": filepath.Join(root, "c.mp4"),
+								},
+							},
+						},
+						InfoMap: map[string]map[string]string{
+							filepath.Join(globalLocation, "example"): {
+								"url": ts.URL + testPath,
+							},
+						},
+					},
+				},
+			},
+			WantErr: false,
+		},
+		{
+			Name:  "info",
+			Flags: &FlagsState{},
+			URLs:  []string{ts.URL + testPath},
+			Config: `
+global {
+	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+}
+
+site "example" {
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
+	info "author" {
+		pattern = "Author: @(?P<username>[^<]+)"
+		capture = "username"
+	}
+
+	info "title" {
+		pattern = "<title>([^<]+)"
+		capture = 1
+	}
+}`,
+			Want: &config.Config{
+				Sites: []config.SiteConfig{
+					{
+						Assets: []config.AssetConfig{
+							{
+								Downloads: map[string]string(nil),
+							},
+						},
+						InfoMap: map[string]map[string]string{
+							filepath.Join(globalLocation, "example"): {
+								"url":    ts.URL + testPath,
+								"author": "everdrone",
+								"title":  "Grab Test Server",
 							},
 						},
 					},

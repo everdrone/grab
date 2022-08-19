@@ -135,7 +135,7 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 					// remove duplicates
 					captures = utils.Unique(captures)
 
-					// MARK: - Transform url
+					// MARK: - transform url
 
 					// TODO: we should change the config schema to store transforms as a map
 					// where the key is the transform label, so we don't end up looping through an array
@@ -151,7 +151,7 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 						}
 					}
 
-					// MARK: - Transform destination filename
+					// MARK: - transform filename
 
 					transformFilename := utils.Filter(asset.Transforms, func(t config.TransformConfig) bool {
 						return t.Name == "filename"
@@ -168,6 +168,8 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 							// NOTE: the result of "transform filename" could be an absolute path!
 							//       so we should not append if absolute
 							if filepath.IsAbs(fileName) {
+								// FIXME: we should disallow absolute paths
+								// it's dangerous and they should be avoided
 								destinations[src] = fileName
 							} else {
 								destinations[src] = filepath.Join(subdirectory, fileName)

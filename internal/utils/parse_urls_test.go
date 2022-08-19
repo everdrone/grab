@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/everdrone/grab/internal/testutils"
 	"github.com/hashicorp/hcl/v2"
 	"golang.org/x/exp/slices"
 )
@@ -137,9 +138,8 @@ func TestGetURLsFromArgs(t *testing.T) {
 		_ = os.Chdir(initialWd)
 	}()
 
-	root := GetOSRoot()
-
-	SetupMemMapFs(root)
+	root := testutils.GetOSRoot()
+	Fs, AFS, Wd = testutils.SetupMemMapFs(root)
 
 	Fs.MkdirAll(filepath.Join(root, "other", "directory"), os.ModePerm)
 	Fs.MkdirAll(filepath.Join(root, "tmp"), os.ModePerm)
