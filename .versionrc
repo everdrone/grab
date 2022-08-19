@@ -20,7 +20,7 @@
   ],
   "bumpFiles": [
     {
-      "filename": "./internal/config/info.go",
+      "filename": "./internal/config/version.go",
       "updater": "./scripts/standard-version-updater.js"
     }
   ],

@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/everdrone/grab/internal/testutils"
 	"github.com/everdrone/grab/internal/utils"
 	"github.com/spf13/afero"
 
@@ -24,7 +25,7 @@ func TestDownload(t *testing.T) {
 		_ = os.Chdir(initialWd)
 	}()
 
-	root := utils.GetOSRoot()
+	root := testutils.GetOSRoot()
 
 	defaultOptions := &FetchOptions{
 		Retries: 1,
@@ -94,12 +95,10 @@ func TestDownload(t *testing.T) {
 				ts := http.FileServer(fs)
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if r.Header.Get("foo") == "bar" {
-						w.WriteHeader(http.StatusOK)
+						ts.ServeHTTP(w, r)
 					} else {
 						w.WriteHeader(http.StatusForbidden)
 					}
-
-					ts.ServeHTTP(w, r)
 				})
 			},
 			Path:     []string{"net", "file.txt"},
@@ -173,7 +172,7 @@ func TestDownload(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(tc *testing.T) {
 			// start fresh for each test case
-			utils.SetupMemMapFs(root)
+			utils.Fs, utils.AFS, utils.Wd = testutils.SetupMemMapFs(root)
 			utils.AFS.WriteFile(filepath.Join(root, "net", "file.txt"), []byte("binary"), os.ModePerm)
 			httpFs := afero.NewHttpFs(utils.Fs)
 

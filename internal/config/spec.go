@@ -136,6 +136,7 @@ var AssetSpec = &hcldec.ObjectSpec{
 		MaxItems: 2,
 		Nested:   TransformSpec,
 	},
+	// TODO: allow setting a subdirectory for the asset
 }
 
 var InfoSpec = &hcldec.ObjectSpec{
@@ -153,6 +154,7 @@ var InfoSpec = &hcldec.ObjectSpec{
 		Type:     cty.String,
 		Required: true,
 	},
+	// TODO: allow using find_all to save arrays of strings
 }
 
 // must validate that there is only one "url" and only one "filename"

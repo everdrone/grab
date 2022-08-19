@@ -55,12 +55,17 @@ func GetURLsFromArgs(args []string) ([]string, hcl.Diagnostics) {
 	urls := make([]string, 0)
 
 	for _, arg := range args {
-		absolute := Abs(arg)
-		exists, err := AFS.Exists(absolute)
-		if err != nil || !exists {
-			// check url
-			url, err := url.Parse(arg)
-			if err != nil || !url.IsAbs() {
+		if parsed, ok := IsValidURL(arg); ok {
+			// valid url, clean it up
+			parsed.Fragment = ""
+			parsed.RawFragment = ""
+
+			urls = append(urls, parsed.String())
+		} else {
+			// not valid, check if it's a file
+			absolute := Abs(arg)
+			exists, err := AFS.Exists(absolute)
+			if err != nil || !exists {
 				return nil, hcl.Diagnostics{&hcl.Diagnostic{
 					Severity: hcl.DiagError,
 					Summary:  "Invalid argument",
@@ -68,19 +73,13 @@ func GetURLsFromArgs(args []string) ([]string, hcl.Diagnostics) {
 				}}
 			}
 
-			// remove fragment
-			url.Fragment = ""
-			url.RawFragment = ""
-
-			urls = append(urls, url.String())
-		} else {
-			// read file
+			// we got a file, parse it
 			fc, err := AFS.ReadFile(absolute)
 			if err != nil {
 				return nil, hcl.Diagnostics{&hcl.Diagnostic{
 					Severity: hcl.DiagError,
-					Summary:  "Invalid argument",
-					Detail:   fmt.Sprintf("The argument %s is not a valid url, nor a file.", arg),
+					Summary:  "Could not read file",
+					Detail:   fmt.Sprintf("Could not read file '%s'.", absolute),
 				}}
 			}
 
@@ -94,4 +93,9 @@ func GetURLsFromArgs(args []string) ([]string, hcl.Diagnostics) {
 	}
 
 	return urls, nil
+}
+
+func IsValidURL(str string) (*url.URL, bool) {
+	u, err := url.Parse(str)
+	return u, err == nil && u.Scheme != "" && u.Host != ""
 }

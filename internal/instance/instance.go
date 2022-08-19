@@ -32,8 +32,6 @@ type Grab struct {
 
 	// the original urls passed as arguments
 	URLs []string
-	// the main location to write to
-	GlobalLocation string
 	// the number of assets to be downloaded
 	TotalAssets int64
 	// a map of all the regular expressions to be used

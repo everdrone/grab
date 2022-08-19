@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/everdrone/grab/internal/testutils"
 	"golang.org/x/exp/slices"
 )
 
@@ -256,7 +257,7 @@ func TestZipMap(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			if tt.Panics {
-				AssertPanic(t, func() { ZipMap(tt.Keys, tt.Vals) })
+				testutils.AssertPanic(t, func() { ZipMap(tt.Keys, tt.Vals) })
 			} else {
 				got := ZipMap(tt.Keys, tt.Vals)
 				if !reflect.DeepEqual(got, tt.Want) {

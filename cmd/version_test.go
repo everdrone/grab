@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	"github.com/everdrone/grab/internal/config"
-	"github.com/everdrone/grab/internal/utils"
+	"github.com/everdrone/grab/internal/testutils"
 )
 
 func TestVersionCmd(t *testing.T) {
 	t.Run("version", func(t *testing.T) {
 		cmdName := "version"
 
-		c, got, err := utils.ExecuteCommand(RootCmd, cmdName)
+		c, got, err := testutils.ExecuteCommand(RootCmd, cmdName)
 		if err != nil {
 			t.Fatal(err)
 		}

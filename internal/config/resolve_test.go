@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/everdrone/grab/internal/testutils"
 	"github.com/everdrone/grab/internal/utils"
 )
 
@@ -17,9 +18,9 @@ func TestResolve(t *testing.T) {
 	}()
 
 	// we need to use a fake root directory for testing on windows, since filepath.Join() will not work with "\\"
-	root := utils.GetOSRoot()
+	root := testutils.GetOSRoot()
 
-	utils.SetupMemMapFs(root)
+	utils.Fs, utils.AFS, utils.Wd = testutils.SetupMemMapFs(root)
 
 	utils.Fs.MkdirAll(filepath.Join(root, "other", "directory"), os.ModePerm)
 	utils.Fs.MkdirAll(filepath.Join(root, "tmp", "test", "config", "nested"), os.ModePerm)
