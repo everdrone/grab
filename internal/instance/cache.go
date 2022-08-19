@@ -72,6 +72,7 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 				if s.Flags.Strict {
 					return diags
 				} else {
+					// FIXME: warn the user that we are skipping this page
 					continue
 				}
 			}
