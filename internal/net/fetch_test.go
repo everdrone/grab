@@ -136,13 +136,12 @@ func TestFetch(t *testing.T) {
 			Name:         "with timeout",
 			UseServerURL: true,
 			Handler: func(w http.ResponseWriter, r *http.Request) {
-				time.Sleep(10 * time.Millisecond)
-
+				time.Sleep(300 * time.Millisecond)
 				w.WriteHeader(http.StatusOK)
 			},
 			Options: &FetchOptions{
 				Retries: 1,
-				Timeout: 1,
+				Timeout: 10,
 			},
 			Want:     "",
 			HasError: true,
