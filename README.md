@@ -40,11 +40,11 @@ This project helps you automate scraping data and downloading assets from the in
 
 # Installation
 
-Download and install the [latest release](https://github.com/everdrone/grab/releases/latest)
+Download and install the [latest release](https://github.com/everdrone/grab/releases/latest).
 
 # Usage
 
-Run the following command to generate a new configuration file in the current directory
+Run the following command to generate a new configuration file in the current directory.
 
 ```
 grab config generate
@@ -54,13 +54,13 @@ grab config generate
 > Grab's configuration file uses [Hashicorp's HCL](https://github.com/hashicorp/hcl).  
 > You can always refer to their specification for topics not covered by the documentation in this repo.
 
-Once you're happy with your configuration, you can check if everything is ok by running
+Once you're happy with your configuration, you can check if everything is ok by running:
 
 ```
 grab config check
 ```
 
-To scrape and download assets, pass one or more urls to the `get` subcommand:
+To scrape and download assets, pass one or more URLs to the `get` subcommand:
 
 ```ini
 # single URL
@@ -74,7 +74,7 @@ grab get https://my.url/and urls.ini list.ini
 ```
 
 > **Note**  
-> The list of urls can contain comments, like the `ini` format, all lines starting with `#` and `;` will be ignored
+> The list of URLs can contain comments, like the `ini` format: all lines starting with `#` and `;` will be ignored.
 
 # Quickstart
 
@@ -121,13 +121,13 @@ grab get https://unsplash.com/photos/uOi3lg8fGl4
 > Please use this tool responsibly. Don't use this tool for Denial of Service attacks! Don't violate Copyright or intellectual property!
 
 Internally, the program checks checks each URL passed to `get`, if it matches a `test` pattern inside of any `site` block, it will parse find all matches for assets or data defined in `asset` and `info` blocks.
-Once all the asset urls are gathered, the download starts.
+Once all the asset URLs are gathered, the download starts.
 
 After running the above command, you should have a new `grab` directory in your `~/Downloads` folder, containing subdirectories for each site defined in the configuration. Inside each site directories you will find all the assets extracted from the provided URLs.
 
 The configuration syntax is based on a few fundamental blocks:
 
-- `global` block: defines the main download directory and global network options.
+- `global` block defines the main download directory and global network options.
 - `site <name>` blocks group other blocks based on the site URL.
 - `asset <name>` blocks define what to look for from each site and how to download it.
 - `info <name>` blocks define what strings to extract from the page body.
@@ -135,9 +135,9 @@ The configuration syntax is based on a few fundamental blocks:
 Additional configuration settings can be specified:
 
 - `network` blocks to pass headers and other network options when making requests.
-- `transform url` blocks to replace the asset url before downloading.
+- `transform url` blocks to replace the asset URL before downloading.
 - `transform filename` blocks to replace the asset's destination path.
-- `subdirectory` blocks to organize downloads into subdirectories named by strings present in the page body or url.
+- `subdirectory` blocks to organize downloads into subdirectories named by strings present in the page body or URL.
 
 For a more in-depth look into Grab's confguration options, check out [the guide](/docs/guide.md).
 
@@ -157,7 +157,7 @@ grab help <subcommand>
 
 #### Arguments
 
-Accepts both urls or path to lists of urls. Both can be provided at the same time.
+Accepts both URLs or path to lists of URLs. Both can be provided at the same time.
 
 ```sh
 # grab get <url|file> [url|file...] [options]
@@ -170,24 +170,24 @@ grab get https://example.com/gallery/1 \
 
 #### Options
 
-| Long       | Short | Default | Description                                                                                                                |
-| ---------- | ----- | ------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `force`    | `f`   | `false` | Overwrites already existing files                                                                                          |
-| `config`   | `c`   | `nil`   | Specify the path to a configuration file                                                                                   |
-| `strict`   | `s`   | `false` | Will stop the program at the first encountered error                                                                       |
-| `dry-run`  | `n`   | `false` | Will send requests without writing to the disk                                                                             |
-| `progress` | `p`   | `false` | Show a progress bar                                                                                                        |
-| `quiet`    | `q`   | `false` | Suppress all output to `stdout` (errors will still be printed to `stderr`)<br/>This option takes precedence over `verbose` |
-| `verbose`  | `v`   | `1`     | Set the verbosity level.<br/>`-v` is 1, `-vv` is 2 and so on...<br/>`quiet` overrides this option.                         |
+| Long       | Short | Default | Description                                                                                                                    |
+| ---------- | ----- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `force`    | `f`   | `false` | To overwrite already existing files                                                                                            |
+| `config`   | `c`   | `nil`   | To specify the path to a configuration file                                                                                    |
+| `strict`   | `s`   | `false` | To stop the program at the first encountered error                                                                             |
+| `dry-run`  | `n`   | `false` | To send requests without writing to the disk                                                                                   |
+| `progress` | `p`   | `false` | To show a progress bar                                                                                                         |
+| `quiet`    | `q`   | `false` | To suppress all output to `stdout` (errors will still be printed to `stderr`).<br/>This option takes precedence over `verbose` |
+| `verbose`  | `v`   | `1`     | To set the verbosity level:<br/>`-v` is 1, `-vv` is 2 and so on...<br/>`quiet` overrides this option.                          |
 
 ## Next steps
 
 - [x] Retries & Timeout
-- [x] Network options inheritance
+- [x] Network options with inheritance
 - [x] URL manipulation
 - [x] Destination manipulation
-- [ ] Display progress bar
-- [ ] Better logging
+- [ ] Display a progress bar
+- [ ] Improve logging
 - [ ] Add HCL eval context functions
 - [ ] Distribute via various package managers:
   - [ ] Homebrew
@@ -195,12 +195,10 @@ grab get https://example.com/gallery/1 \
   - [ ] Chocolatey
   - [ ] Scoop
 - [ ] Scripting language integration
-- [ ] Plugins?
+- [ ] Plugin system
 - [ ] Sequential jobs (like GitHub workflows)
 
 ## Credits
-
-This project has been made possible by:
 
 - [Catppuccin](https://github.com/catppuccin/) for the color palette
 - [Shields.io](https://github.com/badges/shields) for the badges

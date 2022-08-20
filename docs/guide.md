@@ -46,7 +46,7 @@ Replace the path with any directory you want, we will refer to this path as `glo
 
 This will tell grab where to store everything: sites, images, videos, information.
 
-We will add a `site` block called `example`. We will add an attribute `test` with the regular expression that will check if we actually are on `https://example.com`.  
+Let's add a `site` block called `example`, then an attribute `test` with the regular expression that will check if we actually are on `https://example.com`.  
 In there we also want to have two `asset` blocks, one for images and one for videos.
 
 ```
