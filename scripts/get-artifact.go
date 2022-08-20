@@ -5,19 +5,29 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/everdrone/grab/cmd"
 	"github.com/everdrone/grab/internal/config"
 )
 
 func main() {
-	goOS := os.Getenv("TARGET_GOOS")
-	goArch := os.Getenv("TARGET_GOARCH")
+	OS := os.Getenv("TARGET_GOOS")
+	ARCH := os.Getenv("TARGET_GOARCH")
 
+	if OS == "" {
+		OS = runtime.GOOS
+	}
+
+	if ARCH == "" {
+		ARCH = runtime.GOARCH
+	}
+
+	// appends an extension on windows
 	extension := ""
-	if goOS == "windows" {
+	if OS == "windows" {
 		extension = ".exe"
 	}
 
-	fmt.Printf("%s-%s_%s-%s%s", cmd.RootCmd.Name(), config.Version, goOS, goArch, extension)
+	fmt.Printf("%s-%s_%s-%s%s", cmd.RootCmd.Name(), config.Version, OS, ARCH, extension)
 }
