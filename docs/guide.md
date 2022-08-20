@@ -1,6 +1,6 @@
 # Scraping with GRAB
 
-To understand how to exploit the power of Grab, let's use an example.
+Let's set an example.
 
 Say we have a website `https://example.com` that hosts galleries of pictures and videos curated by users. We want to download all the images and video files in the gallery, and we also want to save some text information, like the username of the curator.
 
@@ -72,13 +72,19 @@ site "example" {
 ```
 
 > **Note**  
-> To learn more about escaping strings, read the [section below](#regexp-and-hcl-strings)
+> To learn how to escaping regular expressions in HCL, refer to the [section below](#regexp-and-hcl-strings).
 
 If you're familiar with Regular Expressions, the patterns above should be pretty easy to understand, but we'll go through them here anyway.  
 The `asset[image].pattern` expression captures whatever comes after `<img src="` until it finds another double quote, so it will get us the entire image url.  
 The expression in `asset[video].pattern` does the same thing but with a `video` tag, and it uses a named capture group, for the sake of this example.
 
 Notice how the `capture` attribute is a number when the regular expression doesn't use named captures, and it's a string in the `video` asset because we want to capture the `(?P<video_url>)` group.
+
+> **Warning**  
+> If the `pattern` attribute contains named groups, you must set the `capture` to a string representing the name of the group.  
+> Use an integer `capture` only if your `pattern` does not contain named groups.
+>
+> To learn more about Go's regexp syntax see the [official documentation](https://pkg.go.dev/regexp/syntax).
 
 We also want set `find_all` to `true` because we expect to find multiple video and image urls on the site page.
 
@@ -109,6 +115,85 @@ If we navigate inside the `example` directory we will see the following files:
 ```
 
 The files without extension are the images, and then we have one video file.
+
+## Info blocks
+
+In addition to `asset` blocks, site can also contain `info` blocks.
+
+```hcl
+global {
+  location = "/home/<username>/Downloads/grab"
+}
+
+site "example" {
+  test = ":\\/\\/example\\.com"
+
+  info "curator" {
+    pattern = "\\/user\\/(\\w+)"
+    capture = 1
+    from    = body
+  }
+
+  info "gallery_id" {
+    pattern = "gallery\\/(\\d+)"
+    capture = 1
+    from    = url
+  }
+}
+```
+
+Info blocks behave like `asset` blocks: the `pattern` matches against some text, and `capture` determines the group to extract.  
+In addition we can specify if we want to match the `pattern` against the `body` or the `url` by setting the `from` attribute. If nothing is specified, the `url` will be used.
+
+## Network options
+
+Some websites require a certain set of header to be specified to access a page, or even just for user tracking.
+
+Grab allows us to specify a `network` block, either at the root level (inside `global`), site level (inside each `site`) or asset level (inside each `asset`).
+
+```hcl
+global {
+  location = "/home/<username>/Downloads/grab"
+
+  network {
+    retries = 3
+  }
+}
+
+site "example" {
+  test = ":\\/\\/example\\.com"
+
+  network {
+    retries = 3
+    headers = {
+      "User-Agent" = "Mozilla/5.0 ..."
+    }
+  }
+
+  asset "video" {
+    pattern  = "<video\\ssrc=\"(?P<video_url>[^\"]+)"
+    capture  = "video_url"
+    find_all = true
+
+    network {
+      inherit = false
+      timeout = 10000
+    }
+  }
+
+  # ...
+}
+```
+
+All `network` blocks can contain the following attributes:
+
+- `headers` - `map[string]string`: a dictionary of headers to send along each request.
+- `retries` - `int`: how many times the client will send the same request, if the first attempt fails.
+- `timeout` - `int`: how long the client will wait before giving up on a request, in milliseconds.
+- `inherit` - `bool`: should this network block inherit missing properties from the parent `network` block?
+
+> **Note**  
+> The `inherit` property is not available for the `global.network` block, since there is nothing to inherit from.
 
 ## Subdirectories
 
@@ -143,6 +228,10 @@ site "example" {
 ```
 
 By adding a `subdirectory` block inside our site block, we tell grab to create a new directory with the name extracted from the url, by capturing the first group of the expression `gallery\\/(\\d+)`, so in this case, all the assets will be located at `<global.location>/example/1337`.
+
+> **Note**  
+> The `subdirectory` block, if defined, will tell the program to download the assets into `<global.location>/<site.name>/<subdirectory>/<filename>`  
+> If no subdirectory is specified, the assets will be saved to `<global.location>/<site.name>/<filename>`
 
 ## Substitutions
 
@@ -193,9 +282,61 @@ site "example" {
 }
 ```
 
-The `transform` block is essentially just a regexp replace operation performed on the URL.
+The `transform` block is essentially just a RegExp _replace_ operation performed on the URL.
 
-It uses the same [syntax from Go's RegExp standard library](https://github.com/google/re2/wiki/Syntax) package, but just like backslash escapes, there's a [gotcha with HCL strings](#regexp-and-hcl-strings).
+To better explain the process of transform blocks, here are a flow diagram and some pseudocode:
+
+```mermaid
+stateDiagram-v2
+    A: Set default destination
+    B: Replace url
+    C: Download asset to destination
+    D: Replace destination
+    state if_filename <<choice>>
+    state if_url <<choice>>
+    [*] --> A
+    A --> if_url
+    if_url --> B : with "transform url"
+    if_url --> if_filename : without
+    B --> if_filename
+    if_filename --> C : without
+    if_filename --> D : with "transform filename"
+    D --> C
+    C --> [*]
+```
+
+<details>
+<summary>Go pseudocode</summary>
+
+```go
+// loop through every url matching the asset pattern
+for _, url := range parsed_urls {
+    // by default, the destination is the last element of the original url
+    destination := basename(url)
+
+    // do we have a "transform url" block?
+    if has_transform_url {
+        // perform substitution of the original url with regex
+        url = regexp.Replace(pattern, replacement, url)
+    }
+
+    // do we have a "transform filename" block?
+    if has_transform_filename {
+        // perform substitution of the original url with regex
+        destination = regexp.Replace(pattern, replacement, url)
+    }
+
+    // download with the network options
+    response := fetch(url)
+
+    // save the file
+    return write_file(destination, response)
+}
+```
+
+</details>
+
+The `replace` attribute uses the same [syntax from Go's RegExp standard library](https://github.com/google/re2/wiki/Syntax) package, and just like with backslash escapes, there's a [gotcha about escaping](#replacement-cheat-sheet).
 
 ## RegExp and HCL Strings
 
@@ -203,7 +344,7 @@ As mentioned above, HCL offers multiple advantages over other configuration lang
 
 While very useful for multiple purposes, it can create problems when dealing with Regular Expressions, since the syntax often includes backslashes and dollar signs that would be interpreted differently by the HCL parser.
 
-### Cheat Sheet
+### Escape Cheat Sheet
 
 Some sequences and character classes in RegExp require a backslash. In HCL we should always escape backslashes, like we do with JSON. The following table demonstrates how some HCL strings are interpreted and passed down to Go (if valid).
 
@@ -221,7 +362,9 @@ Some sequences and character classes in RegExp require a backslash. In HCL we sh
 | `(\")`     | `(\")`          | Group capturing a double quote character |
 | `(")`      | **INVALID HCL** |                                          |
 
-For the replacement example, take the following expression:
+### Replacement Cheat Sheet
+
+Take the following expression:
 
 ```regex
 (https?)://(\w+)\.(\w+)

@@ -27,15 +27,16 @@
 
 # Table of contents
 
+- [Motivation](#why)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Configuration](#configuration)
-  - [Downloading Assets](#downloading-assets)
-  - [Indexing Data](#indexing-data)
-  - [Subdirectories](#subdirectories)
-  - [Network Options](#network-options)
+- [Quickstart](#quickstart)
 - [Options](#command-options)
 - [Next steps](#next-steps)
+
+# Why
+
+This project helps you automate scraping data and downloading assets from the internet. Based on Go's Regular Expression engine and HCL, for ease of use, performance and flexibility.
 
 # Installation
 
@@ -43,17 +44,15 @@ Download and install the [latest release](https://github.com/everdrone/grab/rele
 
 # Usage
 
-Let's start fresh. Run the following command to generate a new configuration file in the current directory
+Run the following command to generate a new configuration file in the current directory
 
 ```
 grab config generate
 ```
 
-The file `grab.hcl` should be located in your home directory, or in any parent directory from where you will call the command.
-
-The language of the file is [Hashicorp Configuration Language](https://github.com/hashicorp/hcl)
-
-Read more about the configuration options [here](#configuration)
+> **Note**  
+> Grab's configuration file uses [Hashicorp's HCL](https://github.com/hashicorp/hcl).  
+> You can always refer to their specification for topics not covered by the documentation in this repo.
 
 Once you're happy with your configuration, you can check if everything is ok by running
 
@@ -61,17 +60,7 @@ Once you're happy with your configuration, you can check if everything is ok by 
 grab config check
 ```
 
-or, if your file is not located in a parent directory from your current working directory, you can always specify its path with the `--config` option.
-
-```
-grab config check -c /var/grab.hcl
-```
-
-Now you can start using grab.
-To scrape and download assets use the `grab` command and pass at least one url or a file containing a list of urls.
-
-> **Note**
-> The list of urls can contain comments, like the `ini` format, all lines starting with `#` and `;` will be ignored
+To scrape and download assets, pass one or more urls to the `get` subcommand:
 
 ```ini
 # single URL
@@ -84,160 +73,85 @@ grab get urls.ini
 grab get https://my.url/and urls.ini list.ini
 ```
 
-# Configuration
+> **Note**  
+> The list of urls can contain comments, like the `ini` format, all lines starting with `#` and `;` will be ignored
 
-Take this example configuration:
+# Quickstart
+
+The default configuration, generated with `grab config generate` already works out of the box.
 
 ```hcl
 global {
-    location = "/home/user/Downloads/grab"
+  location = "/home/yourusername/Downloads/grab"
 }
 
-site "example" {
-    test = "example\\.com"
+site "unsplash" {
+  test = "unsplash"
 
-    asset "image" {
-        pattern  = "<img src=\"([^\"]+)\""
-        find_all = true
-        capture  = 1
+  asset "image" {
+    pattern = "contentUrl\":\"([^\"]+)\""
+    capture = 1
+
+    transform filename {
+      pattern = "(?:.+)photos\\/(.*)"
+      replace = "$${1}.jpg"
     }
+  }
 
-    info "editor" {
-        pattern = "editor:\\s@(\\w+)"
-        capture = 1
-    }
+  info "title" {
+    pattern = "meta[^>]+property=\"og:title\"[^>]+content=\"(?P<title>[^\"]+)\""
+    capture = "title"
+  }
 
-    subdirectory {
-        pattern = "gallery\\/(?<id>\\d+)\/"
-        capture = "id"
-        from    = url
-    }
+  subdirectory {
+    pattern = "\\(@(?P<username>\\w+)\\)"
+    capture = "username"
+    from    = body
+  }
 }
 ```
 
-Let's pass our hypothetical url to `grab get`
+For demonstration purposes, we can already download pictures from [unsplash](https://unsplash.com) by using the following command:
 
 ```
-grab get https://example.com/gallery/1337/overview
+grab get https://unsplash.com/photos/uOi3lg8fGl4
 ```
 
-### Downloading assets
+> **Warning**  
+> Please use this tool responsibly. Don't use this tool for Denial of Service attacks! Don't violate Copyright or intellectual property!
 
-The program will check if our url matches with any `site` block using the `test` pattern. If the pattern matches, the program will fetch the page body to scrape its contents.
+Internally, the program checks checks each URL passed to `get`, if it matches a `test` pattern inside of any `site` block, it will parse find all matches for assets or data defined in `asset` and `info` blocks.
+Once all the asset urls are gathered, the download starts.
 
-```hcl
-asset "video" {
-    pattern  = "<video src=\"(?P<videourl>[^\"]+)\""
-    capture  = "videourl"
-    find_all = true  # optional
-}
-```
+After running the above command, you should have a new `grab` directory in your `~/Downloads` folder, containing subdirectories for each site defined in the configuration. Inside each site directories you will find all the assets extracted from the provided URLs.
 
-> **Note**
-> To escape double quotes, you must use one backslash: `\"`
-> To escape common regex expressions like `\d` you should escape twice: `\\d`
+The configuration syntax is based on a few fundamental blocks:
 
-For each `asset` block, grab will search for matches using the `pattern` regex and then extract the `capture` group from the matches.
-By default only the first match will be extracted, if you wish to extract multiple urls from the same page, you can set `find_all` to `true`. Finally all the files will be downloaded from the extracted urls.
+- `global` block: defines the main download directory and global network options.
+- `site <name>` blocks group other blocks based on the site URL.
+- `asset <name>` blocks define what to look for from each site and how to download it.
+- `info <name>` blocks define what strings to extract from the page body.
 
-> Example of extracted urls with the onfiguration above:
->
-> ```
-> https://cdn.example.com/img/image1.jpg
-> https://cdn.example.com/img/image2.jpg
-> https://cdn.example.com/img/image3.jpg
-> ```
+Additional configuration settings can be specified:
 
-### Indexing data
+- `network` blocks to pass headers and other network options when making requests.
+- `transform url` blocks to replace the asset url before downloading.
+- `transform filename` blocks to replace the asset's destination path.
+- `subdirectory` blocks to organize downloads into subdirectories named by strings present in the page body or url.
 
-After the assets, all the `info` blocks are evaluated and information is extracted from the page and will be stored in a `_info.json` file.
-
-```hcl
-info "phone" {
-    pattern  = "tel:(\d+)"
-    capture  = 1
-}
-```
-
-Inside the info file, two additional properties will be set by default: `url` and `timestamp`, representing the page url where the information has been scraped from, and the current time.
-
-> Example `_info.json` output:
->
-> ```json
-> {
->   "url": "https://example.com/gallery/1337/overview",
->   "timestamp": "2022-08-17T13:51:58.7265822Z",
->   "editor": "everdrone"
-> }
-> ```
-
-By default, grab creates a subdirectory with the site name (in this case `example`) to store the information downloaded from this site.
-If you want to create separate subdirectories under `example` you can specify a `subdirectory` block.
-
-### Subdirectories
-
-The `subdirectory` block will extract a string using `pattern` and `capture` just like other blocks, but you can specify the `from` attribute to tell grab to search inside the `url` or inside the `body`
-
-```hcl
-subdirectory {
-    pattern = "href=\"\\/\\@(?P<user>[^\"]+)"
-    capture = "user"
-    from    = body  # defaults to url
-}
-```
-
-The final path of the assets will be `<global.location>/<site.name>/<subdirectory>/<filename>`
-
-> Example of destinations from the configuration above:
->
-> ```
-> /home/user/Downloads/grab/example/1337/image1.jpg
-> ```
->
-> Similarly, the `_info.json` file will be saved to `/home/user/Downloads/grab/example/1337/_info.json`
-
-If no `subdirectory` block is specified, the asset destination will conform to: `<global.location>/<site.name>/<filename>`
-
-> **Warning**
-> If the `pattern` attribute contains named groups, you must set the `capture` attribute to get the named capture.
->
-> Use an integer `capture` groups only if your `pattern` does not contain named groups.
-> To learn more about Go's regexp syntax see the [official documentation](https://pkg.go.dev/regexp/syntax).
-
-### Network options
-
-If a site requires specific headers to be set, or a number of retries, you can add optional `network` blocks to your configuration file.
-
-```hcl
-network {
-    # all attributes are optional
-    retries = 3
-    timeout = 10000  # in milliseconds
-    headers = {
-        "User-Agent" = "Mozilla/5.0 ..."
-    }
-}
-```
-
-`network` blocks can be located in the `global` block, inside `site` blocks and even `asset` blocks.
-
-By default, the `global.network` configuration will be inherited to all sites and all site assets. To avoid inheriting the network configuration of a parent block, you can set `inherit = false` like so:
-
-```hcl
-site "example" {
-    # ...
-
-    network {
-        inherit = false
-    }
-
-    # ...
-}
-```
-
-To learn more about advanced configuration patterns, see [Advanced Configuration](/docs/advanced.md)
+For a more in-depth look into Grab's confguration options, check out [the guide](/docs/guide.md).
 
 # Command Options
+
+To get help about any command, use the `help` subcommand or the `--help` flag:
+
+```ini
+# to list all available commands:
+grab help
+
+# to show instructions for a specific subcommand:
+grab help <subcommand>
+```
 
 ### `get`
 
@@ -283,6 +197,13 @@ grab get https://example.com/gallery/1 \
 - [ ] Scripting language integration
 - [ ] Plugins?
 - [ ] Sequential jobs (like GitHub workflows)
+
+## Credits
+
+This project has been made possible by:
+
+- [Catppuccin](https://github.com/catppuccin/) for the color palette
+- [Shields.io](https://github.com/badges/shields) for the badges
 
 ## License
 
