@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/everdrone/grab/internal/testutils"
 	"github.com/everdrone/grab/internal/utils"
+	"github.com/everdrone/grab/testutils"
 )
 
 func TestGenerate(t *testing.T) {

@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/everdrone/grab/internal/testutils"
 	"github.com/everdrone/grab/internal/utils"
+	"github.com/everdrone/grab/testutils"
 	"github.com/spf13/afero"
 
 	"golang.org/x/exp/slices"

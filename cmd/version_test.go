@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/everdrone/grab/internal/config"
-	"github.com/everdrone/grab/internal/testutils"
+	"github.com/everdrone/grab/testutils"
 )
 
 func TestVersionCmd(t *testing.T) {

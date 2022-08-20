@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/everdrone/grab/internal/testutils"
+	"github.com/everdrone/grab/testutils"
 	"golang.org/x/exp/slices"
 )
 

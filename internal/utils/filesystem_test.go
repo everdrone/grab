@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/everdrone/grab/internal/testutils"
+	"github.com/everdrone/grab/testutils"
 )
 
 func resetWd() {
