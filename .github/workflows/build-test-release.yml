@@ -54,7 +54,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Build
-        run: ${{ matrix.script }}
+        run: ./scripts/build.sh
 
       - name: Create Release Draft
         uses: softprops/action-gh-release@v1
