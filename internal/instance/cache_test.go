@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/everdrone/grab/internal/config"
-	"github.com/everdrone/grab/testutils"
+	tu "github.com/everdrone/grab/testutils"
 )
 
 func TestBuildSiteCache(t *testing.T) {
@@ -116,11 +116,11 @@ func TestBuildSiteCache(t *testing.T) {
 // it should be refactored.
 func TestBuildAssetCache(t *testing.T) {
 	testPath := `/gallery/123/test?id=543`
-	root := testutils.GetOSRoot()
+	root := tu.GetOSRoot()
 	globalLocation := filepath.Join(root, "global")
 
 	// create test server
-	e := testutils.CreateMockServer()
+	e := tu.CreateMockServer()
 
 	// hacky way of getting the same port as echo's listener
 	// see: https://stackoverflow.com/a/42218765
@@ -146,7 +146,7 @@ func TestBuildAssetCache(t *testing.T) {
 			URLs:  []string{ts.URL + "/notFound"},
 			Config: `
 global {
-	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+	location = "` + tu.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {
@@ -176,7 +176,7 @@ site "example" {
 			URLs:  []string{ts.URL + "/notFound"},
 			Config: `
 global {
-	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+	location = "` + tu.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {
@@ -205,7 +205,7 @@ site "example" {
 			Flags: &FlagsState{},
 			Config: `
 global {
-	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+	location = "` + tu.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {
@@ -235,7 +235,7 @@ site "example" {
 			URLs:  []string{ts.URL + testPath},
 			Config: `
 global {
-	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+	location = "` + tu.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {
@@ -272,7 +272,7 @@ site "example" {
 			URLs:  []string{ts.URL + testPath},
 			Config: `
 global {
-	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+	location = "` + tu.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {
@@ -311,7 +311,7 @@ site "example" {
 			URLs:  []string{ts.URL + testPath},
 			Config: `
 global {
-	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+	location = "` + tu.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {
@@ -350,7 +350,7 @@ site "example" {
 			URLs:  []string{ts.URL + testPath},
 			Config: `
 global {
-	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+	location = "` + tu.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {
@@ -395,7 +395,7 @@ site "example" {
 			URLs:  []string{ts.URL + testPath},
 			Config: `
 global {
-	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+	location = "` + tu.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {
@@ -440,7 +440,7 @@ site "example" {
 			URLs:  []string{ts.URL + testPath},
 			Config: `
 global {
-	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+	location = "` + tu.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {
@@ -484,7 +484,7 @@ site "example" {
 			URLs:  []string{ts.URL + testPath},
 			Config: `
 global {
-	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+	location = "` + tu.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {
@@ -528,7 +528,7 @@ site "example" {
 			URLs:  []string{ts.URL + testPath},
 			Config: `
 global {
-	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+	location = "` + tu.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {
@@ -540,7 +540,7 @@ site "example" {
 
 		transform filename {
 			pattern = ".+\\/video\\/(?P<id>\\w+)\\/(\\w+)\\.(?P<extension>\\w+)"
-			replace = "` + testutils.EscapeHCLString(root) + `$${id}.$${extension}"
+			replace = "` + tu.EscapeHCLString(root) + `$${id}.$${extension}"
 		}
 	}
 }`,
@@ -572,7 +572,7 @@ site "example" {
 			URLs:  []string{ts.URL + testPath},
 			Config: `
 global {
-	location = "` + testutils.EscapeHCLString(globalLocation) + `"
+	location = "` + tu.EscapeHCLString(globalLocation) + `"
 }
 
 site "example" {

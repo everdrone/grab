@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/everdrone/grab/internal/config"
-	"github.com/everdrone/grab/testutils"
+	tu "github.com/everdrone/grab/testutils"
 )
 
 func TestMergeFetchOptionsChain(t *testing.T) {
@@ -30,8 +30,8 @@ func TestMergeFetchOptionsChain(t *testing.T) {
 			Root: nil,
 			Children: []*config.NetworkConfig{
 				{
-					Timeout: testutils.Int(20000),
-					Retries: testutils.Int(2),
+					Timeout: tu.Int(20000),
+					Retries: tu.Int(2),
 					Headers: &map[string]string{
 						"foo": "bar",
 					},
@@ -48,8 +48,8 @@ func TestMergeFetchOptionsChain(t *testing.T) {
 		{
 			Name: "children nil results parent",
 			Root: &config.RootNetworkConfig{
-				Timeout: testutils.Int(6000),
-				Retries: testutils.Int(3),
+				Timeout: tu.Int(6000),
+				Retries: tu.Int(3),
 				Headers: &map[string]string{
 					"foo": "bar",
 				},
@@ -66,23 +66,23 @@ func TestMergeFetchOptionsChain(t *testing.T) {
 		{
 			Name: "both parent and children with all properties set",
 			Root: &config.RootNetworkConfig{
-				Timeout: testutils.Int(6000),
-				Retries: testutils.Int(3),
+				Timeout: tu.Int(6000),
+				Retries: tu.Int(3),
 				Headers: &map[string]string{
 					"foo": "bar",
 				},
 			},
 			Children: []*config.NetworkConfig{
 				{
-					Timeout: testutils.Int(20000),
-					Retries: testutils.Int(2),
+					Timeout: tu.Int(20000),
+					Retries: tu.Int(2),
 					Headers: &map[string]string{
 						"baz": "qux",
 					},
 				},
 				{
-					Timeout: testutils.Int(4000),
-					Retries: testutils.Int(5),
+					Timeout: tu.Int(4000),
+					Retries: tu.Int(5),
 					Headers: &map[string]string{
 						"bar": "quf",
 					},
@@ -101,19 +101,19 @@ func TestMergeFetchOptionsChain(t *testing.T) {
 		{
 			Name: "both parent and children with the same property unset",
 			Root: &config.RootNetworkConfig{
-				Timeout: testutils.Int(6000),
-				Retries: testutils.Int(3),
+				Timeout: tu.Int(6000),
+				Retries: tu.Int(3),
 				Headers: nil,
 			},
 			Children: []*config.NetworkConfig{
 				{
-					Timeout: testutils.Int(20000),
-					Retries: testutils.Int(2),
+					Timeout: tu.Int(20000),
+					Retries: tu.Int(2),
 					Headers: nil,
 				},
 				{
-					Timeout: testutils.Int(4000),
-					Retries: testutils.Int(5),
+					Timeout: tu.Int(4000),
+					Retries: tu.Int(5),
 					Headers: nil,
 				},
 			},
@@ -126,17 +126,17 @@ func TestMergeFetchOptionsChain(t *testing.T) {
 		{
 			Name: "both parent and children with the some properties unset",
 			Root: &config.RootNetworkConfig{
-				Retries: testutils.Int(3),
+				Retries: tu.Int(3),
 			},
 			Children: []*config.NetworkConfig{
 				{
-					Timeout: testutils.Int(20000),
+					Timeout: tu.Int(20000),
 					Headers: &map[string]string{
 						"foo": "bar",
 					},
 				},
 				{
-					Retries: testutils.Int(3),
+					Retries: tu.Int(3),
 					Headers: &map[string]string{
 						"foo": "baz",
 					},
@@ -153,23 +153,23 @@ func TestMergeFetchOptionsChain(t *testing.T) {
 		{
 			Name: "does not inherit",
 			Root: &config.RootNetworkConfig{
-				Timeout: testutils.Int(6000),
-				Retries: testutils.Int(3),
+				Timeout: tu.Int(6000),
+				Retries: tu.Int(3),
 				Headers: &map[string]string{
 					"foo": "bar",
 				},
 			},
 			Children: []*config.NetworkConfig{
 				{
-					Timeout: testutils.Int(20000),
-					Retries: testutils.Int(2),
+					Timeout: tu.Int(20000),
+					Retries: tu.Int(2),
 					Headers: &map[string]string{
 						"baz": "qux",
 					},
 				},
 				{
-					Inherit: testutils.Bool(false),
-					Retries: testutils.Int(5),
+					Inherit: tu.Bool(false),
+					Retries: tu.Int(5),
 					Headers: &map[string]string{
 						"bar": "quf",
 					},
@@ -186,23 +186,23 @@ func TestMergeFetchOptionsChain(t *testing.T) {
 		{
 			Name: "does not inherit multiple",
 			Root: &config.RootNetworkConfig{
-				Timeout: testutils.Int(6000),
-				Retries: testutils.Int(3),
+				Timeout: tu.Int(6000),
+				Retries: tu.Int(3),
 				Headers: &map[string]string{
 					"foo": "bar",
 				},
 			},
 			Children: []*config.NetworkConfig{
 				{
-					Inherit: testutils.Bool(false),
-					Timeout: testutils.Int(20000),
-					Retries: testutils.Int(2),
+					Inherit: tu.Bool(false),
+					Timeout: tu.Int(20000),
+					Retries: tu.Int(2),
 					Headers: &map[string]string{
 						"baz": "qux",
 					},
 				},
 				{
-					Retries: testutils.Int(5),
+					Retries: tu.Int(5),
 					Headers: &map[string]string{
 						"bar": "quf",
 					},

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/everdrone/grab/internal/utils"
-	"github.com/everdrone/grab/testutils"
+	tu "github.com/everdrone/grab/testutils"
 )
 
 func TestGetCmd(t *testing.T) {
@@ -14,8 +14,8 @@ func TestGetCmd(t *testing.T) {
 		_ = os.Chdir(initialWd)
 	}()
 
-	root := testutils.GetOSRoot()
-	utils.Fs, utils.AFS, utils.Wd = testutils.SetupMemMapFs(root)
+	root := tu.GetOSRoot()
+	utils.Fs, utils.AFS, utils.Wd = tu.SetupMemMapFs(root)
 
 	tests := []struct {
 		Name string
