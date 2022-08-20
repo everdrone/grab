@@ -1,37 +1,16 @@
 global {
-  location = "{{.Location}}"
-
-  network {
-    timeout = 30
-  }
+  location = "{{ .Location }}"
 }
 
 site "unsplash" {
   test = "unsplash"
 
-  network {
-    inherit = false
-    retries = 3
-    headers = {
-      "User-Agent" : "grab/0.1",
-    }
-  }
-
   asset "image" {
     pattern = "contentUrl\":\"([^\"]+)\""
     capture = 1
 
-    network {
-      inherit = false
-    }
-
-    transform url {
-      pattern = "([^/]+)$"
-      replace = "https://unsplash.com/$1"
-    }
-
     transform filename {
-      pattern = "(https?[^\\?\\#]+)(.*)"
+      pattern = "(?:.+)photos\\/(.*)"
       replace = "$${1}.jpg"
     }
   }
@@ -42,8 +21,8 @@ site "unsplash" {
   }
 
   subdirectory {
-    pattern = "href=\"\\/\\@(?P<user>[^\"]+)"
-    capture = "user"
+    pattern = "\\(@(?P<username>\\w+)\\)"
+    capture = "username"
     from    = body
   }
 }

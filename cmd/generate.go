@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/everdrone/grab/internal/utils"
@@ -54,8 +55,11 @@ To write the file contents to a file or into a directory, use the --output flag.
 			return utils.ErrSilent
 		}
 
+		// escape backslashes if any
+		homedir = strings.Replace(homedir, "\\", "\\\\", -1)
+
 		data := &ConfigTemplateData{
-			Location: filepath.Join(homedir, "Downloads"),
+			Location: filepath.Join(homedir, "Downloads", "grab"),
 		}
 
 		buffer := new(bytes.Buffer)
