@@ -16,7 +16,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
 
-      - name: Set up go
+      - name: Install Go
         uses: actions/setup-go@v3
         with:
           go-version-file: go.mod
@@ -48,15 +48,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
 
-      - name: Set up Go
-        uses: actions/setup-go@v2
+      - name: Install Go
+        uses: actions/setup-go@v3
         with:
           go-version-file: go.mod
 
       - name: Build
         run: ${{ matrix.script }}
 
-      - name: Release
+      - name: Create Release Draft
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/v')
         with:
