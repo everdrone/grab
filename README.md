@@ -1,7 +1,7 @@
 <div align="center">
     <h1>
-        <img width="500" src="https://raw.githubusercontent.com/everdrone/grab/main/.github/media/Dark@2x.png#gh-light-mode-only" alt="GRAB" />
-        <img width="500" src="https://raw.githubusercontent.com/everdrone/grab/main/.github/media/Light@2x.png#gh-dark-mode-only" alt="GRAB" />
+        <img width="750" src="https://raw.githubusercontent.com/everdrone/grab/main/.github/media/Dark@2x.png#gh-light-mode-only" alt="GRAB" />
+        <img width="750" src="https://raw.githubusercontent.com/everdrone/grab/main/.github/media/Light@2x.png#gh-dark-mode-only" alt="GRAB" />
     </h1>
     <h3>Greedy, Regex-Aware Binary Downloader</h3>
 </div>
@@ -63,7 +63,7 @@ grab config check -c /var/grab.hcl
 Now you can start using grab.
 To scrape and download assets use the `grab` command and pass at least one url or a file containing a list of urls.
 
-> **Note**  
+> **Note**
 > The list of urls can contain comments, like the `ini` format, all lines starting with `#` and `;` will be ignored
 
 ```ini
@@ -126,8 +126,8 @@ asset "video" {
 }
 ```
 
-> **Note**  
-> To escape double quotes, you must use one backslash: `\"`  
+> **Note**
+> To escape double quotes, you must use one backslash: `\"`
 > To escape common regex expressions like `\d` you should escape twice: `\\d`
 
 For each `asset` block, grab will search for matches using the `pattern` regex and then extract the `capture` group from the matches.
@@ -191,10 +191,10 @@ The final path of the assets will be `<global.location>/<site.name>/<subdirector
 
 If no `subdirectory` block is specified, the asset destination will conform to: `<global.location>/<site.name>/<filename>`
 
-> **Warning**  
+> **Warning**
 > If the `pattern` attribute contains named groups, you must set the `capture` attribute to get the named capture.
 >
-> Use an integer `capture` groups only if your `pattern` does not contain named groups.  
+> Use an integer `capture` groups only if your `pattern` does not contain named groups.
 > To learn more about Go's regexp syntax see the [official documentation](https://pkg.go.dev/regexp/syntax).
 
 ### Network options
