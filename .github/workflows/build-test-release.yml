@@ -41,11 +41,11 @@ jobs:
         os: [linux, darwin, windows]
         arch: [amd64, arm64]
         include:
-          - platform: ubuntu-latest
+          - os: linux
             script: ./scripts/build.sh
-          - platform: macos-latest
+          - os: darwin
             script: ./scripts/build.sh
-          - platform: windows-latest
+          - os: windows
             script: ./scripts/build.ps1
     runs-on: ubuntu-latest
     env:

@@ -180,7 +180,7 @@ site "example" {
     find_all = true
 
     transform url {
-      pattern = "(.+)_small(\\.\w+)"
+      pattern = "(.+)_small(\\.\\w+)"
       replace = "$${1}_large$${2}"
     }
   }
