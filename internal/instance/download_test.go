@@ -8,7 +8,7 @@ import (
 
 	"github.com/everdrone/grab/internal/config"
 	"github.com/everdrone/grab/internal/utils"
-	"github.com/everdrone/grab/testutils"
+	tu "github.com/everdrone/grab/testutils"
 )
 
 func TestDownload(t *testing.T) {
@@ -16,12 +16,12 @@ func TestDownload(t *testing.T) {
 	defer func() {
 		_ = os.Chdir(initialWd)
 	}()
-	root := testutils.GetOSRoot()
+	root := tu.GetOSRoot()
 
 	global := filepath.Join(root, "global")
-	escapedGlobal := testutils.EscapeHCLString(global)
+	escapedGlobal := tu.EscapeHCLString(global)
 
-	e := testutils.CreateMockServer()
+	e := tu.CreateMockServer()
 	ts := httptest.NewUnstartedServer(e)
 	ts.Listener.Close()
 	ts.Listener = e.Listener
@@ -132,7 +132,7 @@ site "example" {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(tc *testing.T) {
 			// create a fresh filesystem
-			utils.Fs, utils.AFS, utils.Wd = testutils.SetupMemMapFs(root)
+			utils.Fs, utils.AFS, utils.Wd = tu.SetupMemMapFs(root)
 
 			mock := createMockGetCmd()
 			g := New(mock)

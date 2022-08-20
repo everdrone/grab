@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/everdrone/grab/internal/utils"
-	"github.com/everdrone/grab/testutils"
+	tu "github.com/everdrone/grab/testutils"
 )
 
 func TestFindCmd(t *testing.T) {
@@ -17,8 +17,8 @@ func TestFindCmd(t *testing.T) {
 	}()
 
 	// we need to use a fake root directory for testing on windows, since filepath.Join() will not work with "\\"
-	root := testutils.GetOSRoot()
-	utils.Fs, utils.AFS, utils.Wd = testutils.SetupMemMapFs(root)
+	root := tu.GetOSRoot()
+	utils.Fs, utils.AFS, utils.Wd = tu.SetupMemMapFs(root)
 
 	utils.Fs.MkdirAll(filepath.Join(root, "other", "directory"), os.ModePerm)
 	utils.Fs.MkdirAll(filepath.Join(root, "tmp", "test", "config", "nested"), os.ModePerm)
@@ -83,7 +83,7 @@ func TestFindCmd(t *testing.T) {
 				utils.Wd = tt.Wd
 			}()
 
-			c, got, gotErr, err := testutils.ExecuteCommandErr(RootCmd, append(args, tt.Args...)...)
+			c, got, gotErr, err := tu.ExecuteCommandErr(RootCmd, append(args, tt.Args...)...)
 			if (err != nil) != tt.HasErrors {
 				t.Log(utils.Wd)
 				t.Errorf("got: %v, want: %v", err, tt.HasErrors)

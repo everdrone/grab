@@ -10,7 +10,6 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [1.19]
         platform: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
     steps:
@@ -20,7 +19,7 @@ jobs:
       - name: Set up go
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version-file: go.mod
 
       - name: Vet
         run: go vet ./...
@@ -38,16 +37,8 @@ jobs:
     needs: [test]
     strategy:
       matrix:
-        go-version: [1.19]
         os: [linux, darwin, windows]
         arch: [amd64, arm64]
-        include:
-          - os: linux
-            script: ./scripts/build.sh
-          - os: darwin
-            script: ./scripts/build.sh
-          - os: windows
-            script: ./scripts/build.ps1
     runs-on: ubuntu-latest
     env:
       GO111MODULE: "on"
@@ -60,7 +51,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version-file: go.mod
 
       - name: Build
         run: ${{ matrix.script }}

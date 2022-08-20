@@ -3,12 +3,10 @@ package testutils
 import "github.com/spf13/afero"
 
 func GetOSRoot() string {
-	root := afero.FilePathSeparator
-	if root == "\\" {
-		root = "C:\\"
+	if afero.FilePathSeparator == "\\" {
+		return "C:\\"
 	}
-
-	return root
+	return afero.FilePathSeparator
 }
 
 func SetupMemMapFs(root string) (afero.Fs, *afero.Afero, string) {

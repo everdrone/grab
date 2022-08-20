@@ -13,9 +13,8 @@ import (
 	"time"
 
 	"github.com/everdrone/grab/internal/utils"
-	"github.com/everdrone/grab/testutils"
+	tu "github.com/everdrone/grab/testutils"
 	"github.com/spf13/afero"
-
 	"golang.org/x/exp/slices"
 )
 
@@ -25,7 +24,7 @@ func TestDownload(t *testing.T) {
 		_ = os.Chdir(initialWd)
 	}()
 
-	root := testutils.GetOSRoot()
+	root := tu.GetOSRoot()
 
 	defaultOptions := &FetchOptions{
 		Retries: 1,
@@ -172,7 +171,7 @@ func TestDownload(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(tc *testing.T) {
 			// start fresh for each test case
-			utils.Fs, utils.AFS, utils.Wd = testutils.SetupMemMapFs(root)
+			utils.Fs, utils.AFS, utils.Wd = tu.SetupMemMapFs(root)
 			utils.AFS.WriteFile(filepath.Join(root, "net", "file.txt"), []byte("binary"), os.ModePerm)
 			httpFs := afero.NewHttpFs(utils.Fs)
 

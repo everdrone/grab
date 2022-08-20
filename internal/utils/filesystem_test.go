@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/everdrone/grab/testutils"
+	tu "github.com/everdrone/grab/testutils"
 )
 
 func resetWd() {
@@ -60,7 +60,7 @@ func TestAbs(t *testing.T) {
 		_ = os.Chdir(initialWd)
 	}()
 
-	root := testutils.GetOSRoot()
+	root := tu.GetOSRoot()
 
 	tests := []struct {
 		Wd    string

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/everdrone/grab/internal/utils"
-	"github.com/everdrone/grab/testutils"
+	tu "github.com/everdrone/grab/testutils"
 )
 
 func TestGenerate(t *testing.T) {
@@ -14,8 +14,8 @@ func TestGenerate(t *testing.T) {
 		_ = os.Chdir(initialWd)
 	}()
 
-	root := testutils.GetOSRoot()
-	utils.Fs, utils.AFS, utils.Wd = testutils.SetupMemMapFs(root)
+	root := tu.GetOSRoot()
+	utils.Fs, utils.AFS, utils.Wd = tu.SetupMemMapFs(root)
 
 	tests := []struct {
 		Name      string
@@ -37,7 +37,7 @@ func TestGenerate(t *testing.T) {
 				utils.Wd = tt.Wd
 			}()
 
-			c, got, gotErr, err := testutils.ExecuteCommandErr(RootCmd, append(args, tt.Args...)...)
+			c, got, gotErr, err := tu.ExecuteCommandErr(RootCmd, append(args, tt.Args...)...)
 			if (err != nil) != tt.HasErrors {
 				t.Log(utils.Wd)
 				t.Errorf("got: %v, want: %v", err, tt.HasErrors)
