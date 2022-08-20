@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/everdrone/grab/internal/config"
-	"github.com/everdrone/grab/internal/testutils"
 	"github.com/everdrone/grab/internal/utils"
+	"github.com/everdrone/grab/testutils"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )

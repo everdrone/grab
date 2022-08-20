@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/everdrone/grab/internal/testutils"
+	"github.com/everdrone/grab/testutils"
 	"github.com/hashicorp/hcl/v2"
 	"golang.org/x/exp/slices"
 )

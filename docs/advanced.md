@@ -33,13 +33,13 @@ for _, url := range parsed_urls {
     // do we have a "transform url" block?
     if has_transform_url {
         // perform substitution of the original url with regex
-        url = regex(pattern, replacement, assetUrl)
+        url = regex(pattern, replacement, url)
     }
 
     // do we have a "transform filename" block?
     if has_transform_filename {
-        // perform substitution of the original destination with regex
-        destination = regex(pattern, replacement, destination)
+        // perform substitution of the original url with regex
+        destination = regex(pattern, replacement, url)
     }
 
     // download with the network options
