@@ -71,6 +71,9 @@ site "example" {
 }
 ```
 
+> **Note**  
+> To learn more about escaping strings, read the [section below](#regexp-and-hcl-strings)
+
 If you're familiar with Regular Expressions, the patterns above should be pretty easy to understand, but we'll go through them here anyway.  
 The `asset[image].pattern` expression captures whatever comes after `<img src="` until it finds another double quote, so it will get us the entire image url.  
 The expression in `asset[video].pattern` does the same thing but with a `video` tag, and it uses a named capture group, for the sake of this example.
@@ -177,8 +180,8 @@ site "example" {
     find_all = true
 
     transform url {
-      pattern =
-      replace =
+      pattern = "(.+)_small(\\.\w+)"
+      replace = "$${1}_large$${2}"
     }
   }
 
@@ -189,3 +192,58 @@ site "example" {
   }
 }
 ```
+
+The `transform` block is essentially just a regexp replace operation performed on the URL.
+
+It uses the same [syntax from Go's RegExp standard library](https://github.com/google/re2/wiki/Syntax) package, but just like backslash escapes, there's a [gotcha with HCL strings](#regexp-and-hcl-strings).
+
+## RegExp and HCL Strings
+
+As mentioned above, HCL offers multiple advantages over other configuration languages, including string interpolation or templating.
+
+While very useful for multiple purposes, it can create problems when dealing with Regular Expressions, since the syntax often includes backslashes and dollar signs that would be interpreted differently by the HCL parser.
+
+### Cheat Sheet
+
+Some sequences and character classes in RegExp require a backslash. In HCL we should always escape backslashes, like we do with JSON. The following table demonstrates how some HCL strings are interpreted and passed down to Go (if valid).
+
+| HCL String | Go String       | RegExp Token                             |
+| ---------- | --------------- | ---------------------------------------- |
+| `\\`       | `\`             | Backslash                                |
+| `\`        | **INVALID HCL** |                                          |
+| `\\d`      | `\d`            | Perl character class                     |
+| `\"`       | `\"`            | Double quote character                   |
+| `\\.`      | `\.`            | Dot character                            |
+| `\.`       | **INVALID HCL** |                                          |
+| `.`        | `.`             | Any character                            |
+| `\\n`      | `\n`            | New line character                       |
+| `\n`       | **INVALID HCL** |                                          |
+| `(\")`     | `(\")`          | Group capturing a double quote character |
+| `(")`      | **INVALID HCL** |                                          |
+
+For the replacement example, take the following expression:
+
+```regex
+(https?)://(\w+)\.(\w+)
+```
+
+if applied to the string: `https://github.com`, it produces the following groups:
+
+```
+group0 => https://github.com
+group1 => https
+group2 => github
+group3 => com
+```
+
+Considering the example above, here's a conversion table from HCL to Go to its RegExp engine.
+
+| HCL String            | Go String          | RegExp Output        |
+| --------------------- | ------------------ | -------------------- |
+| `$1`                  | `$1`               | `https`              |
+| `${1}`                | `1`                | `1`                  |
+| `$${1}`               | `${1}`             | `https`              |
+| `$${3}.$${2}`         | `${3}.${2}`        | `com.github`         |
+| `${3}.${2}`           | `3_2`              | `3_2`                |
+| `$${1}://$${2}.$${3}` | `${1}://${2}.${3}` | `https://github.com` |
+| `${1}://${2}.${3}`    | `1://2.3`          | `1://2.3`            |
