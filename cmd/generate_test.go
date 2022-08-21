@@ -68,8 +68,8 @@ func TestGenerate(t *testing.T) {
 					tc.Errorf("could not read file: %v", err)
 				}
 
-				if !strings.HasPrefix(string(gotFile), "global {\n") {
-					tc.Errorf("got: %q, want: 'global {\n'", string(gotFile))
+				if !strings.HasPrefix(string(gotFile), "global {") {
+					tc.Errorf("got: %q, want: 'global {'", string(gotFile))
 				}
 			} else {
 				if !strings.HasPrefix(got, tt.Want) {
