@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/everdrone/grab/internal/utils"
@@ -17,6 +19,8 @@ func TestGenerate(t *testing.T) {
 	root := tu.GetOSRoot()
 	utils.Fs, utils.AFS, utils.Wd = tu.SetupMemMapFs(root)
 
+	utils.Fs.MkdirAll(filepath.Join(root, "test"), os.ModePerm)
+
 	tests := []struct {
 		Name      string
 		Wd        string
@@ -24,9 +28,21 @@ func TestGenerate(t *testing.T) {
 		HasErrors bool
 		CheckFile string
 		Want      string
-		WantErr   string
 	}{
-		{},
+		{
+			Name:      "no args",
+			Wd:        filepath.Join(root, "test"),
+			HasErrors: false,
+			CheckFile: filepath.Join(root, "test", "grab.hcl"),
+		},
+		{
+			Name:      "stdout",
+			Args:      []string{"--stdout"},
+			Wd:        filepath.Join(root, "test"),
+			HasErrors: false,
+			CheckFile: filepath.Join(root, "test", "grab.hcl"),
+			Want:      ``,
+		},
 	}
 
 	args := []string{"config", "generate"}
@@ -37,7 +53,7 @@ func TestGenerate(t *testing.T) {
 				utils.Wd = tt.Wd
 			}()
 
-			c, got, gotErr, err := tu.ExecuteCommandErr(RootCmd, append(args, tt.Args...)...)
+			c, got, _, err := tu.ExecuteCommandErr(RootCmd, append(args, tt.Args...)...)
 			if (err != nil) != tt.HasErrors {
 				t.Log(utils.Wd)
 				t.Errorf("got: %v, want: %v", err, tt.HasErrors)
@@ -47,11 +63,19 @@ func TestGenerate(t *testing.T) {
 				t.Errorf("got: %s, want: 'generate", c.Name())
 			}
 
-			if got != tt.Want {
-				t.Errorf("got: %s, want: %s", got, tt.Want)
-			}
-			if gotErr != tt.WantErr {
-				t.Errorf("got: %s, want: %s", gotErr, tt.WantErr)
+			if tt.CheckFile != "" {
+				gotFile, err := utils.AFS.ReadFile(tt.CheckFile)
+				if err != nil {
+					t.Errorf("could not read file: %v", err)
+				}
+
+				if !strings.HasPrefix(string(gotFile), "global {\n") {
+					t.Errorf("file does not contain global block")
+				}
+			} else {
+				if !strings.HasPrefix(got, tt.Want) {
+					t.Errorf("got: %s, want: %s", got, tt.Want)
+				}
 			}
 		})
 	}

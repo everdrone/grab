@@ -1,11 +1,8 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
-	"runtime/debug"
 
-	"github.com/everdrone/grab/internal/config"
 	"github.com/everdrone/grab/internal/utils"
 
 	"github.com/spf13/cobra"
@@ -29,13 +26,6 @@ var RootCmd = &cobra.Command{
 	SilenceErrors: true,
 	SilenceUsage:  true,
 	Args:          cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("vt:", cmd.VersionTemplate())
-		if bi, ok := debug.ReadBuildInfo(); ok {
-			fmt.Printf("\nBuild info: %+v\n", bi)
-		}
-		fmt.Println(config.BuildArch, config.BuildOS)
-	},
 }
 
 func Execute() {
