@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.5](https://github.com/everdrone/grab/compare/v0.1.4...v0.1.5) (2022-08-21)
+
+
+### Bug Fixes
+
+* remove build info from root command ([bcc861f](https://github.com/everdrone/grab/commit/bcc861f8d29eb5b0594bbc7dd226fe29f5d98c0e))
+
 ### [0.1.4](https://github.com/everdrone/grab/compare/v0.1.3...v0.1.4) (2022-08-20)
 
 
