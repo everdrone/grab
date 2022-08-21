@@ -53,37 +53,59 @@ func TestNew(t *testing.T) {
 }
 
 func TestParseFlags(t *testing.T) {
-	// TODO: refactor!
-	t.Run("parse quiet", func(tc *testing.T) {
-		mock := createMockGetCmd()
-		g := New(mock)
+	tests := []struct {
+		Name string
+		Args []string
+		Want *FlagsState
+	}{
+		{
+			"quiet",
+			[]string{"-q"},
+			&FlagsState{
+				Quiet:     true,
+				Verbosity: 0,
+			},
+		},
+		{
+			"quiet and verbosity",
+			[]string{"-q", "-vvv"},
+			&FlagsState{
+				Quiet:     true,
+				Verbosity: 0,
+			},
+		},
+		{
+			"quiet and verbosity",
+			[]string{"-f"},
+			&FlagsState{
+				Force:     true,
+				Verbosity: 1,
+			},
+		},
+		{
+			"config path",
+			[]string{"-c", "grab.hcl"},
+			&FlagsState{
+				ConfigPath: "grab.hcl",
+				Verbosity:  1,
+			},
+		},
+	}
 
-		mock.SetArgs([]string{"http://example.com", "-vvv", "-q"})
-		mock.ExecuteC()
+	for _, tt := range tests {
+		t.Run(tt.Name, func(tc *testing.T) {
+			mock := createMockGetCmd()
+			mock.SetArgs(append([]string{"list.ini"}, tt.Args...))
+			mock.ExecuteC()
+			g := New(mock)
 
-		g.ParseFlags()
+			g.ParseFlags()
 
-		if g.Flags.Quiet != true {
-			tc.Errorf("got: %v, want: %v", g.Flags.Quiet, true)
-		}
-		if g.Flags.Verbosity != 0 {
-			tc.Errorf("got: %v, want: %v", g.Flags.Verbosity, 0)
-		}
-	})
-
-	t.Run("parse verbosity", func(tc *testing.T) {
-		mock := createMockGetCmd()
-		g := New(mock)
-
-		mock.SetArgs([]string{"http://example.com", "-vv"})
-		mock.ExecuteC()
-
-		g.ParseFlags()
-
-		if g.Flags.Verbosity != 3 {
-			tc.Errorf("got: %v, want: %v", g.Flags.Verbosity, 3)
-		}
-	})
+			if !reflect.DeepEqual(g.Flags, tt.Want) {
+				tc.Errorf("got: %+v, want: %+v", g.Flags, tt.Want)
+			}
+		})
+	}
 }
 
 func TestParseConfig(t *testing.T) {

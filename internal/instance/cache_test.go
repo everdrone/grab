@@ -111,6 +111,46 @@ func TestBuildSiteCache(t *testing.T) {
 	}
 }
 
+func TestRemovePathFromURL(t *testing.T) {
+	tests := []struct {
+		Name    string
+		URL     string
+		Want    string
+		WantErr bool
+	}{
+		{
+			Name: "no path",
+			URL:  "https://example.com",
+			Want: "https://example.com",
+		},
+		{
+			Name: "path",
+			URL:  "https://example.com/path",
+			Want: "https://example.com",
+		},
+		{
+			Name:    "invalid url",
+			URL:     "1ht tp://example.com",
+			WantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Name, func(tc *testing.T) {
+			got, err := removePathFromURL(tt.URL)
+			if (err != nil) != tt.WantErr {
+				tc.Errorf("got: %+v, want: %+v", err, tt.WantErr)
+			}
+
+			if tt.Want != "" {
+				if got.String() != tt.Want {
+					tc.Errorf("got: %s, want: %s", got, tt.Want)
+				}
+			}
+		})
+	}
+}
+
 // FIXME: from this line down, the code is a mess.
 // it does test the functionality of cache.go but it's very very messy.
 // it should be refactored.
@@ -152,7 +192,7 @@ global {
 site "example" {
 	test = "http://(127\\.0\\.0\\.1|localhost):"
 	asset "image" {
-		pattern = "https:\\/\\/example\\.com\\/img\\/\\w+\\.\\w+"
+		pattern = "\\/img\\/\\w+\\.\\w+"
 		capture = 0
 		find_all = true
 	}
@@ -182,7 +222,7 @@ global {
 site "example" {
 	test = "http://(127\\.0\\.0\\.1|localhost):"
 	asset "image" {
-		pattern = "https:\\/\\/example\\.com\\/img\\/\\w+\\.\\w+"
+		pattern = "\\/img\\/\\w+\\.\\w+"
 		capture = 0
 		find_all = true
 	}
@@ -211,7 +251,7 @@ global {
 site "example" {
 	test = "http://(127\\.0\\.0\\.1|localhost):"
 	asset "image" {
-		pattern = "https:\\/\\/example\\.com\\/img\\/\\w+\\.\\w+"
+		pattern = "\\/img\\/\\w+\\.\\w+"
 		capture = 0
 		find_all = true
 	}

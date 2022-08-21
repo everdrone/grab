@@ -14,10 +14,7 @@ var GetCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		g := instance.New(cmd)
 
-		if diags := g.ParseFlags(); diags.HasErrors() {
-			g.Log(0, *diags)
-			return utils.ErrSilent
-		}
+		g.ParseFlags()
 
 		if diags := g.ParseConfig(); diags.HasErrors() {
 			g.Log(0, *diags)
