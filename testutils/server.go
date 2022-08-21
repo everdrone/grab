@@ -82,7 +82,7 @@ func CreateMockServer() *echo.Echo {
 
 	e.GET("/broken/:id", func(c echo.Context) error {
 		// will cause a reading error
-		c.Response().Header().Set("Content-Length", "1")
+		c.Response().Header().Set("Content-Length", "999")
 		return c.NoContent(http.StatusOK)
 	})
 

@@ -78,25 +78,25 @@ func TestFindCmd(t *testing.T) {
 	args := []string{"config", "find"}
 
 	for _, tt := range tests {
-		t.Run(tt.Name, func(t *testing.T) {
+		t.Run(tt.Name, func(tc *testing.T) {
 			func() {
 				utils.Wd = tt.Wd
 			}()
 
 			c, got, gotErr, err := tu.ExecuteCommandErr(RootCmd, append(args, tt.Args...)...)
 			if (err != nil) != tt.HasErrors {
-				t.Log(utils.Wd)
-				t.Errorf("got: %v, want: %v", err, tt.HasErrors)
+				tc.Log(utils.Wd)
+				tc.Errorf("got: %v, want: %v", err, tt.HasErrors)
 			}
 
 			if c.Name() != "find" {
-				t.Errorf("got: %s, want: 'find", c.Name())
+				tc.Errorf("got: %s, want: 'find", c.Name())
 			}
 			if got != tt.Want {
-				t.Errorf("got: %s, want: %s", got, tt.Want)
+				tc.Errorf("got: %s, want: %s", got, tt.Want)
 			}
 			if gotErr != tt.WantErr {
-				t.Errorf("got: %s, want: %s", gotErr, tt.WantErr)
+				tc.Errorf("got: %s, want: %s", gotErr, tt.WantErr)
 			}
 		})
 	}

@@ -192,7 +192,7 @@ global {
 site "example" {
 	test = "http://(127\\.0\\.0\\.1|localhost):"
 	asset "image" {
-		pattern = "https:\\/\\/example\\.com\\/img\\/\\w+\\.\\w+"
+		pattern = "\\/img\\/\\w+\\.\\w+"
 		capture = 0
 		find_all = true
 	}
@@ -222,7 +222,7 @@ global {
 site "example" {
 	test = "http://(127\\.0\\.0\\.1|localhost):"
 	asset "image" {
-		pattern = "https:\\/\\/example\\.com\\/img\\/\\w+\\.\\w+"
+		pattern = "\\/img\\/\\w+\\.\\w+"
 		capture = 0
 		find_all = true
 	}
@@ -251,7 +251,7 @@ global {
 site "example" {
 	test = "http://(127\\.0\\.0\\.1|localhost):"
 	asset "image" {
-		pattern = "https:\\/\\/example\\.com\\/img\\/\\w+\\.\\w+"
+		pattern = "\\/img\\/\\w+\\.\\w+"
 		capture = 0
 		find_all = true
 	}

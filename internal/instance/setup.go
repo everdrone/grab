@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/hcl/v2"
 )
 
-func (s *Grab) ParseFlags() *hcl.Diagnostics {
+func (s *Grab) ParseFlags() {
 	flags := &FlagsState{}
 
 	flags.Force, _ = s.Command.Flags().GetBool("force")
@@ -30,7 +30,6 @@ func (s *Grab) ParseFlags() *hcl.Diagnostics {
 	}
 
 	s.Flags = flags
-	return &hcl.Diagnostics{}
 }
 
 func (s *Grab) ParseConfig() *hcl.Diagnostics {
