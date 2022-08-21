@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    tags: ["v*.*.*"]
 
 jobs:
   test:
@@ -63,3 +62,14 @@ jobs:
           draft: true
           generate_release_notes: true
           files: grab-*
+
+  purge:
+    needs: [test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Purge
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          curl -s https://github.com/${{ github.event.repository.owner.login }}/${{ github.event.repository.name }}/blob/main/README.md > readme.md.tmp
+          grep -Eo '<img src="[^"]+"' readme.md.tmp | grep camo | grep -Eo 'https[^"]+' | xargs -I {} curl -w "\n" -s -X PURGE {}
