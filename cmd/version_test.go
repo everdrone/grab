@@ -11,8 +11,6 @@ import (
 )
 
 func TestVersionCmd(t *testing.T) {
-	cmdName := "version"
-
 	config.CommitHash = "abcdef0123456789"
 	config.BuildOS = runtime.GOOS
 	config.BuildArch = runtime.GOARCH
@@ -47,17 +45,17 @@ func TestVersionCmd(t *testing.T) {
 
 			config.LatestReleaseURL = ts.URL
 
-			c, got, err := tu.ExecuteCommand(RootCmd, cmdName)
+			c, got, err := tu.ExecuteCommand(RootCmd, "version")
 			if err != nil {
 				tc.Fatal(err)
 			}
 
-			if c.Name() != cmdName {
-				tc.Fatalf("got: '%s', want: '%s'", c.Name(), cmdName)
+			if c.Name() != VersionCmd.Name() {
+				tc.Fatalf("got: %s, want: %s", c.Name(), VersionCmd.Name())
 			}
 
 			if got != tt.want {
-				tc.Errorf("got: '%s', want: '%s'", got, tt.want)
+				tc.Errorf("got: %s, want: %s", got, tt.want)
 			}
 		})
 	}
