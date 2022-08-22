@@ -85,11 +85,7 @@ func TestCheckForUpdates(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
-
 		t.Run(tt.name, func(tc *testing.T) {
-			tc.Parallel()
-
 			// start the test server
 			ts := httptest.NewServer(http.HandlerFunc(tt.handler))
 
