@@ -79,7 +79,7 @@ func TestCheckForUpdates(t *testing.T) {
 			handler: func(w http.ResponseWriter, r *http.Request) {
 				w.Write([]byte(`{"tag_name": "v987.654.321"}`))
 			},
-			want:    "v987.654.321",
+			want:    "987.654.321",
 			wantErr: false,
 		},
 	}

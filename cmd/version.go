@@ -20,8 +20,8 @@ var VersionCmd = &cobra.Command{
 
 		newVersion, _ := update.CheckForUpdates()
 		if newVersion != "" {
-			cmd.Printf("\nNew version available: %s\n", newVersion)
-			cmd.Printf("Download it at https://github.com/everdrone/grab/releases/latest\n")
+			cmd.Printf("\nNew version available %s → %s\n", config.Version, newVersion)
+			cmd.Printf("https://github.com/everdrone/grab/releases/latest\n")
 		}
 	},
 }

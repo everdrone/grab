@@ -33,8 +33,8 @@ func TestVersionCmd(t *testing.T) {
 				w.Write([]byte(`{"tag_name": "v987.654.321"}`))
 			},
 			want: "grab v" + config.Version + " " + config.BuildOS + "/" + config.BuildArch + " (" + config.CommitHash[:7] + ")\n\n" +
-				"New version available: v987.654.321\n" +
-				"Download it at https://github.com/everdrone/grab/releases/latest\n",
+				"New version available " + config.Version + " → 987.654.321\n" +
+				"https://github.com/everdrone/grab/releases/latest\n",
 		},
 	}
 

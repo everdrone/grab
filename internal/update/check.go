@@ -32,17 +32,19 @@ func CheckForUpdates() (string, error) {
 		return "", fmt.Errorf("no tag name")
 	}
 
-	if version, ok := tagName.(string); ok {
-		if version[0] != 'v' {
-			version = "v" + version
+	if latest, ok := tagName.(string); ok {
+		if latest[0] != 'v' {
+			latest = "v" + latest
 		}
 
-		if !semver.IsValid(version) {
-			return "", fmt.Errorf("invalid version: %s", version)
+		if !semver.IsValid(latest) {
+			return "", fmt.Errorf("invalid version: %s", latest)
 		}
 
-		if semver.Compare(version, "v"+config.Version) == 1 {
-			return version, nil
+		current := "v" + config.Version
+
+		if semver.Compare(latest, current) == 1 {
+			return latest[1:], nil
 		}
 	} else {
 		return "", fmt.Errorf("invalid tag name")
