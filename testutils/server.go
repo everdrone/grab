@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"bytes"
+	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -73,7 +74,9 @@ func CreateMockServer() *echo.Echo {
 			addr := "http://" + strings.Replace(e.ListenerAddr().String(), "[::]", "127.0.0.1", -1)
 
 			page := template.Must(template.New("test").Parse(htmlPage))
-			page.Execute(buf, map[string]string{"Base": addr})
+			if err := page.Execute(buf, map[string]string{"Base": addr}); err != nil {
+				log.Fatalf("error executing template: %v", err)
+			}
 
 			return c.HTML(http.StatusOK, buf.String())
 		}
