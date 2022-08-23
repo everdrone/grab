@@ -154,8 +154,8 @@ site "example" {
 
 			c, _, _, err := tu.ExecuteCommandErr(RootCmd, append([]string{"get"}, tt.Args...)...)
 
-			if c.Name() != "get" {
-				tc.Fatalf("got: %s, want: 'find", c.Name())
+			if c.Name() != GetCmd.Name() {
+				tc.Fatalf("got: %s, want: %s", c.Name(), GetCmd.Name())
 			}
 
 			if tt.CheckFiles != nil {

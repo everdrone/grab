@@ -136,8 +136,8 @@ func TestCheckCmd(t *testing.T) {
 				t.Errorf("unexpected error: %v", err)
 			}
 
-			if c.Name() != "check" {
-				t.Errorf("got: '%s', want: 'check'", c.Name())
+			if c.Name() != CheckCmd.Name() {
+				t.Errorf("got: '%s', want: %s", c.Name(), CheckCmd.Name())
 			}
 			if !strings.Contains(got, tt.WantContains) {
 				t.Errorf("got: %s, does not contain: %s", got, tt.WantContains)

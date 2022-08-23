@@ -89,8 +89,8 @@ func TestFindCmd(t *testing.T) {
 				tc.Errorf("got: %v, want: %v", err, tt.HasErrors)
 			}
 
-			if c.Name() != "find" {
-				tc.Errorf("got: %s, want: 'find", c.Name())
+			if c.Name() != FindCmd.Name() {
+				tc.Errorf("got: %s, want: %s", c.Name(), FindCmd.Name())
 			}
 			if got != tt.Want {
 				tc.Errorf("got: %s, want: %s", got, tt.Want)
