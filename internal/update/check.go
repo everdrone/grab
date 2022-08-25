@@ -3,6 +3,7 @@ package update
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/everdrone/grab/internal/config"
 	"github.com/everdrone/grab/internal/net"
@@ -33,7 +34,7 @@ func CheckForUpdates() (string, error) {
 	}
 
 	if latest, ok := tagName.(string); ok {
-		if latest[0] != 'v' {
+		if !strings.HasPrefix(latest, "v") {
 			latest = "v" + latest
 		}
 
@@ -44,7 +45,7 @@ func CheckForUpdates() (string, error) {
 		current := "v" + config.Version
 
 		if semver.Compare(latest, current) == 1 {
-			return latest[1:], nil
+			return strings.TrimPrefix(latest, "v"), nil
 		}
 	} else {
 		return "", fmt.Errorf("invalid tag name")

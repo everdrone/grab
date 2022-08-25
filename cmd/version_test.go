@@ -32,9 +32,9 @@ func TestVersionCmd(t *testing.T) {
 			handler: func(w http.ResponseWriter, r *http.Request) {
 				w.Write([]byte(`{"tag_name": "v987.654.321"}`))
 			},
-			want: "grab v" + config.Version + " " + config.BuildOS + "/" + config.BuildArch + " (" + config.CommitHash[:7] + ")\n\n" +
-				"New version available " + config.Version + " → 987.654.321\n" +
-				"https://github.com/everdrone/grab/releases/latest\n",
+			want: "grab v" + config.Version + " " + config.BuildOS + "/" + config.BuildArch + " (" + config.CommitHash[:7] + ")\n\n\n" +
+				"A new release of grab is available: " + config.Version + " → 987.654.321\n" +
+				"https://github.com/everdrone/grab/releases/latest\n\n",
 		},
 	}
 
@@ -55,7 +55,7 @@ func TestVersionCmd(t *testing.T) {
 			}
 
 			if got != tt.want {
-				tc.Errorf("got: %s, want: %s", got, tt.want)
+				tc.Errorf("got: %q, want: %q", got, tt.want)
 			}
 		})
 	}

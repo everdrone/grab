@@ -135,6 +135,16 @@ func CreateMockServer() *echo.Echo {
 		return c.NoContent(http.StatusUnauthorized)
 	})
 
+	e.GET("/releases", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"tag_name": "v987.654.321",
+		})
+	})
+
+	e.GET("/bad_releases", func(c echo.Context) error {
+		return c.NoContent(http.StatusNotFound)
+	})
+
 	// used to get the server address during execution.
 	// on windows, this triggers the firewall to open the port.
 	l, _ := net.Listen("tcp4", "127.0.0.1:0")
