@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/everdrone/grab/internal/config"
 	"github.com/everdrone/grab/internal/net"
 	"github.com/everdrone/grab/internal/utils"
@@ -46,17 +48,17 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 	var diags *hcl.Diagnostics
 
 	for siteIndex, site := range s.Config.Sites {
+		log.Trace().Str("site", site.Name).Msg("visiting site block")
+
 		for _, pageUrl := range site.URLs {
+			log.Trace().Str("url", pageUrl).Msg("processing url")
+
 			// we already checked this url before, so we can skip the error
 			base, _ := removePathFromURL(pageUrl)
 
 			options := net.MergeFetchOptionsChain(s.Config.Global.Network, site.Network)
 
-			s.Log(2, hcl.Diagnostics{{
-				Severity: utils.DiagInfo,
-				Summary:  "Fetching page",
-				Detail:   pageUrl,
-			}})
+			log.Info().Str("url", pageUrl).Msg("fetching")
 
 			// MARK: - get the page body
 
@@ -83,6 +85,8 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 			if site.Subdirectory != nil {
 				// we have a subdirectory block
 
+				log.Trace().Str("site", site.Name).Msg("visiting subdirectory block")
+
 				var source string
 				if site.Subdirectory.From == "url" {
 					source = pageUrl
@@ -106,15 +110,21 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 					} else {
 						subdirectory = filepath.Join(s.Config.Global.Location, site.Name, subDirs[0])
 					}
+
+					log.Trace().Str("site", site.Name).Str("subdirectory", subdirectory).Msg("subdirectory path")
 				}
 			} else {
 				// we have no subdirectory block, just use the site name
 				subdirectory = filepath.Join(s.Config.Global.Location, site.Name)
+
+				log.Trace().Str("site", site.Name).Str("subdirectory", subdirectory).Msg("no subdirectory block")
 			}
 
 			// MARK: - loop through the asset blocks
 
 			for assetIndex, asset := range site.Assets {
+				log.Debug().Str("site", site.Name).Str("asset", asset.Name).Msg("visiting asset block")
+
 				// match against body
 				if s.RegexCache[asset.Pattern].MatchString(body) {
 					findAll := false
@@ -135,6 +145,8 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 					// remove duplicates
 					captures = utils.Unique(captures)
 
+					log.Trace().Str("site", site.Name).Str("asset", asset.Name).Strs("matches", captures).Msgf("%d %s found", len(captures), utils.Plural(len(captures), "match", "matches"))
+
 					// MARK: - transform url
 
 					// TODO: we should change the config schema to store transforms as a map
@@ -144,11 +156,15 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 					})
 
 					if len(transformUrl) > 0 {
+						log.Trace().Str("site", site.Name).Str("asset", asset.Name).Msg("visiting transforming url block")
+
 						// we have a transform url block
 						t := transformUrl[0]
 						for i, src := range captures {
 							captures[i] = s.RegexCache[t.Pattern].ReplaceAllString(src, t.Replace)
 						}
+
+						log.Trace().Str("site", site.Name).Str("asset", asset.Name).Strs("matches", captures).Msgf("%d matched %s replaced", len(captures), utils.Plural(len(captures), "url", "urls"))
 					}
 
 					// MARK: - transform filename
@@ -160,6 +176,8 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 					destinations := make(map[string]string, 0)
 
 					if len(transformFilename) > 0 {
+						log.Trace().Str("site", site.Name).Str("asset", asset.Name).Msg("visiting transforming filename block")
+
 						// we have a transform filename block
 						t := transformFilename[0]
 						for _, src := range captures {
@@ -186,6 +204,8 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 							}
 
 							destinations[src] = unescaped
+
+							log.Trace().Str("site", site.Name).Str("asset", asset.Name).Str("source", src).Str("destination", destinations[src]).Msg("transformed filename")
 						}
 					} else {
 						// we don't have any transform filename blocks
@@ -205,6 +225,8 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 							}
 
 							destinations[src] = unescaped
+
+							log.Trace().Str("site", site.Name).Str("asset", asset.Name).Str("source", src).Str("destination", destinations[src]).Msg("transformed filename")
 						}
 					}
 
@@ -212,6 +234,8 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 
 					resolvedDestinations := make(map[string]string, 0)
 					for src, dst := range destinations {
+						log.Debug().Str("site", site.Name).Str("asset", asset.Name).Msg("resolving destination path")
+
 						parsed, err := url.Parse(src)
 						if err != nil {
 							return &hcl.Diagnostics{{
@@ -232,13 +256,9 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 								}}
 							}
 
-							s.Log(3, hcl.Diagnostics{{
-								Severity: utils.DiagInfo,
-								Summary:  "Resolved relative url",
-								Detail:   fmt.Sprintf("%s -> %s", src, resolved.String()),
-							}})
-
 							resolvedDestinations[resolved.String()] = dst
+
+							log.Trace().Str("site", site.Name).Str("asset", asset.Name).Str("source", src).Str("destination", resolved.String()).Msg("resolved relative url")
 						} else {
 							// nothing to do, the url is already absolute
 							resolvedDestinations[src] = dst
@@ -273,6 +293,8 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 
 			// loop through index blocks
 			for _, info := range site.Infos {
+				log.Trace().Str("site", site.Name).Str("info", info.Name).Msg("visiting info block")
+
 				key := info.Name
 
 				if s.RegexCache[info.Pattern].MatchString(body) {
@@ -287,6 +309,7 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 
 					if len(captures) > 0 {
 						infoMap[key] = captures[0]
+						log.Trace().Str("site", site.Name).Str("info", info.Name).Strs("matches", captures).Msgf("%d %s found", len(captures), utils.Plural(len(captures), "match", "matches"))
 					}
 				}
 			}

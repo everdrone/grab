@@ -6,6 +6,7 @@ import (
 
 	"github.com/everdrone/grab/internal/context"
 	"github.com/everdrone/grab/internal/utils"
+	"github.com/rs/zerolog/log"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/gohcl"
@@ -133,6 +134,8 @@ func EvaluateRegexPattern(attr *hclsyntax.Attribute, ctx *hcl.EvalContext) (stri
 // - site*.info*.pattern
 // - site*.subdirectory.pattern
 func BuildRegexCache(root *hclsyntax.Body, ctx *hcl.EvalContext) (RegexCacheMap, hcl.Diagnostics) {
+	log.Trace().Msg("building regex cache")
+
 	var regexCache = make(RegexCacheMap)
 
 	sites := utils.Filter(root.Blocks, func(b *hclsyntax.Block) bool {
@@ -140,12 +143,16 @@ func BuildRegexCache(root *hclsyntax.Body, ctx *hcl.EvalContext) (RegexCacheMap,
 	})
 
 	for _, site := range sites {
+		log.Trace().Str("name", site.Labels[0]).Msg("processing site")
+
 		// test attribute is there
 		if site.Body.Attributes["test"] != nil {
 			str, re, diags := EvaluateRegexPattern(site.Body.Attributes["test"], ctx)
 			if diags.HasErrors() {
 				return nil, diags
 			}
+
+			log.Trace().Str("name", site.Labels[0]).Str("pattern", str).Msg("adding test regex")
 
 			regexCache[str] = re
 		}
@@ -170,6 +177,8 @@ func BuildRegexCache(root *hclsyntax.Body, ctx *hcl.EvalContext) (RegexCacheMap,
 				if diags.HasErrors() {
 					return nil, diags
 				}
+
+				log.Trace().Str("name", site.Labels[0]).Str("pattern", str).Msg("adding pattern regex")
 
 				// FIXME: see if the regex has named captures or indexed captures and warn the user
 				// if pb.Body.Attributes["capture"] != nil {

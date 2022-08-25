@@ -5,37 +5,35 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/everdrone/grab/internal/net"
 	"github.com/everdrone/grab/internal/utils"
+	"github.com/rs/zerolog/log"
 
 	"github.com/hashicorp/hcl/v2"
 )
 
-func (s *Grab) Download() *hcl.Diagnostics {
+func (s *Grab) Download() error {
 	if s.Flags.DryRun {
+		log.Warn().Msg("dry run, not downloading")
+
 		for _, site := range s.Config.Sites {
 			// do not print anything if the site does not download anything?
 			// if !site.HasMatches {
 			// 	continue
 			// }
 
-			s.Command.Printf("site: %s\n", site.Name)
-
 			for location, infoMap := range site.InfoMap {
-				s.Command.Printf("info: %s:\n", location)
-				s.Command.Print(utils.FormatMap(infoMap, " : ", true))
+				log.Info().Fields(infoMap).Str("site", site.Name).Str("location", location).Msg("indexing")
 			}
 
 			for _, asset := range site.Assets {
-				relativeDownloads := make(map[string]string, 0)
 				for src, dst := range asset.Downloads {
 					rel, _ := filepath.Rel(s.Config.Global.Location, dst)
-					relativeDownloads[src] = rel
+					log.Info().Str("source", src).Str("destination", rel).Str("site", site.Name).Str("asset", asset.Name).Msg("downloading")
 				}
 
-				s.Command.Printf("asset \"%s\": %s\n", asset.Name, utils.Plural(len(asset.Downloads), "asset", "assets"))
-				s.Command.Print(utils.FormatMap(relativeDownloads, " → ", false))
 			}
 		}
 
@@ -67,11 +65,7 @@ func (s *Grab) Download() *hcl.Diagnostics {
 
 			dst := filepath.Join(subdirectory, "_info.json")
 
-			s.Log(2, hcl.Diagnostics{{
-				Severity: utils.DiagInfo,
-				Summary:  "Indexing info",
-				Detail:   dst,
-			}})
+			log.Info().Str("destination", dst).Msg("indexing")
 
 			if err := utils.AFS.WriteFile(dst, marshaled, os.ModePerm); err != nil {
 				return &hcl.Diagnostics{{
@@ -98,6 +92,8 @@ func (s *Grab) Download() *hcl.Diagnostics {
 
 				options := net.MergeFetchOptionsChain(s.Config.Global.Network, site.Network, asset.Network)
 
+				log.Debug().Str("site", site.Name).Str("asset", asset.Name).Str("source", src).Interface("options", options).Msg("network options")
+
 				// check if file exists
 				performWrite := true
 				if exists, err := utils.AFS.Exists(dst); err != nil || exists {
@@ -106,37 +102,23 @@ func (s *Grab) Download() *hcl.Diagnostics {
 
 				// if force or file does not exist, write to disk
 				if s.Flags.Force || performWrite {
-					s.Log(2, hcl.Diagnostics{{
-						Severity: utils.DiagInfo,
-						Summary:  "Downloading asset",
-						Detail:   fmt.Sprintf("%s -> %s", src, dst),
-					}})
+					log.Info().Str("source", src).Str("destination", strings.TrimPrefix(dst, s.Config.Global.Location)).Msg("downloading")
 
 					if err := net.Download(src, dst, options); err != nil {
-						// FIXME: this should be appended and returned when the function finishes if not in strict mode
-						diags := &hcl.Diagnostics{{
-							Severity: hcl.DiagError,
-							Summary:  "Failed to download asset",
-							Detail:   fmt.Sprintf("%s: %s", src, err.Error()),
-						}}
-
 						// return now if we are in strict mode
 						if s.Flags.Strict {
-							return diags
+							log.Err(err).Str("source", src).Str("destination", strings.TrimPrefix(dst, s.Config.Global.Location)).Msg("failed to download asset")
+							return err
 						} else {
-							s.Log(1, *diags)
+							log.Err(err).Str("source", src).Str("destination", strings.TrimPrefix(dst, s.Config.Global.Location)).Msg("failed to download asset")
 						}
 					}
 				} else {
-					s.Log(1, hcl.Diagnostics{{
-						Severity: hcl.DiagWarning,
-						Summary:  "File already exists",
-						Detail:   fmt.Sprintf("Skipping download of %s.%s into %s", site.Name, asset.Name, dst),
-					}})
+					log.Warn().Str("destination", strings.TrimPrefix(dst, s.Config.Global.Location)).Msg("file already exists")
 				}
 			}
 		}
 	}
 
-	return &hcl.Diagnostics{}
+	return nil
 }

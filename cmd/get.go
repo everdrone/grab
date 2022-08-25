@@ -1,8 +1,12 @@
 package cmd
 
 import (
+	"time"
+
 	"github.com/everdrone/grab/internal/instance"
 	"github.com/everdrone/grab/internal/utils"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"github.com/spf13/cobra"
 )
@@ -12,6 +16,8 @@ var GetCmd = &cobra.Command{
 	Short: "Scrape and download assets from a URL, a file or a both",
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: cmd.OutOrStdout(), TimeFormat: time.RFC3339})
+
 		g := instance.New(cmd)
 
 		g.ParseFlags()
@@ -33,8 +39,7 @@ var GetCmd = &cobra.Command{
 			return utils.ErrSilent
 		}
 
-		if diags := g.Download(); diags.HasErrors() {
-			g.Log(0, *diags)
+		if err := g.Download(); err != nil {
 			return utils.ErrSilent
 		}
 
