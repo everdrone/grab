@@ -58,8 +58,8 @@ func TestGenerate(t *testing.T) {
 				tc.Errorf("got: %v, want: %v", err, tt.HasErrors)
 			}
 
-			if c.Name() != "generate" {
-				tc.Errorf("got: %s, want: 'generate", c.Name())
+			if c.Name() != GenerateCmd.Name() {
+				tc.Errorf("got: %s, want: %s", c.Name(), GenerateCmd.Name())
 			}
 
 			if tt.CheckFile != "" {

@@ -2,7 +2,7 @@ package net
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 )
@@ -57,7 +57,7 @@ func Fetch(url string, options *FetchOptions) (string, error) {
 		return "", err
 	} else {
 		if statusOK {
-			body, err = ioutil.ReadAll(res.Body)
+			body, err = io.ReadAll(res.Body)
 			return string(body), err
 		} else {
 			return "", fmt.Errorf(res.Status)
