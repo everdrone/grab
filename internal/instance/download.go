@@ -37,7 +37,7 @@ func (s *Grab) Download() error {
 			}
 		}
 
-		return &hcl.Diagnostics{}
+		return nil
 	}
 
 	for _, site := range s.Config.Sites {
@@ -92,7 +92,7 @@ func (s *Grab) Download() error {
 
 				options := net.MergeFetchOptionsChain(s.Config.Global.Network, site.Network, asset.Network)
 
-				log.Debug().Str("site", site.Name).Str("asset", asset.Name).Str("source", src).Interface("options", options).Msg("network options")
+				// log.Debug().Str("site", site.Name).Str("asset", asset.Name).Str("source", src).Interface("options", options).Msg("network options")
 
 				// check if file exists
 				performWrite := true
@@ -102,7 +102,7 @@ func (s *Grab) Download() error {
 
 				// if force or file does not exist, write to disk
 				if s.Flags.Force || performWrite {
-					log.Info().Str("source", src).Str("destination", strings.TrimPrefix(dst, s.Config.Global.Location)).Msg("downloading")
+					log.Info().Str("url", src).Str("file", filepath.Base(dst)).Msg("downloading")
 
 					if err := net.Download(src, dst, options); err != nil {
 						// return now if we are in strict mode

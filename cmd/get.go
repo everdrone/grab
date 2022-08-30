@@ -1,11 +1,8 @@
 package cmd
 
 import (
-	"time"
-
 	"github.com/everdrone/grab/internal/instance"
 	"github.com/everdrone/grab/internal/utils"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/spf13/cobra"
@@ -16,26 +13,32 @@ var GetCmd = &cobra.Command{
 	Short: "Scrape and download assets from a URL, a file or a both",
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: cmd.OutOrStdout(), TimeFormat: time.RFC3339})
+		log.Logger = instance.DefaultLogger(cmd.OutOrStderr())
 
 		g := instance.New(cmd)
 
 		g.ParseFlags()
 
 		if diags := g.ParseConfig(); diags.HasErrors() {
-			g.Log(0, *diags)
+			for _, diag := range diags.Errs() {
+				log.Err(diag).Msg("config error")
+			}
 			return utils.ErrSilent
 		}
 
 		if diags := g.ParseURLs(args); diags.HasErrors() {
-			g.Log(0, *diags)
+			for _, diag := range diags.Errs() {
+				log.Err(diag).Msg("argument error")
+			}
 			return utils.ErrSilent
 		}
 
 		g.BuildSiteCache()
 
 		if diags := g.BuildAssetCache(); diags.HasErrors() {
-			g.Log(0, *diags)
+			for _, diag := range diags.Errs() {
+				log.Err(diag).Msg("runtime error")
+			}
 			return utils.ErrSilent
 		}
 

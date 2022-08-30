@@ -33,16 +33,14 @@ func (s *Grab) ParseFlags() {
 
 	switch flags.Verbosity {
 	case 0:
-		zerolog.SetGlobalLevel(zerolog.FatalLevel)
-	case 1:
 		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
-	case 2:
+	case 1:
 		zerolog.SetGlobalLevel(zerolog.WarnLevel)
-	case 3:
+	case 2:
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	case 4:
+	case 3:
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	case 5:
+	case 4:
 		zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	default:
 		zerolog.SetGlobalLevel(zerolog.TraceLevel)

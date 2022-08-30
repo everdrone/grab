@@ -150,13 +150,13 @@ site "example" {
 
 			cacheDiags := g.BuildAssetCache()
 			if cacheDiags.HasErrors() {
-				t.Fatalf("got errors: %+v", cacheDiags)
+				tc.Fatalf("got errors: %+v", cacheDiags)
 			}
 
 			got := g.Download()
 
-			if got.HasErrors() != tt.WantErr {
-				t.Errorf("got %v, want errors %v", got, tt.WantErr)
+			if (got != nil) != tt.WantErr {
+				tc.Errorf("got %v, want errors %v", got, tt.WantErr)
 			}
 
 			for path, contents := range tt.Want {

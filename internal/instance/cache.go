@@ -234,8 +234,6 @@ func (s *Grab) BuildAssetCache() *hcl.Diagnostics {
 
 					resolvedDestinations := make(map[string]string, 0)
 					for src, dst := range destinations {
-						log.Debug().Str("site", site.Name).Str("asset", asset.Name).Msg("resolving destination path")
-
 						parsed, err := url.Parse(src)
 						if err != nil {
 							return &hcl.Diagnostics{{

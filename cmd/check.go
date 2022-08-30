@@ -26,6 +26,7 @@ var CheckCmd = &cobra.Command{
 
 			resolved, err := config.Resolve("grab.hcl", configPath)
 			if err != nil {
+
 				utils.PrintDiag(cmd.ErrOrStderr(), &hcl.Diagnostic{
 					Severity: hcl.DiagError,
 					Summary:  "could not resolve config file",
