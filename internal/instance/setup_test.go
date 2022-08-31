@@ -11,6 +11,7 @@ import (
 	"github.com/everdrone/grab/internal/utils"
 	tu "github.com/everdrone/grab/testutils"
 	"github.com/mitchellh/go-homedir"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
 
@@ -54,9 +55,10 @@ func TestNew(t *testing.T) {
 
 func TestParseFlags(t *testing.T) {
 	tests := []struct {
-		Name string
-		Args []string
-		Want *FlagsState
+		Name            string
+		Args            []string
+		Want            *FlagsState
+		WantGlobalLevel zerolog.Level
 	}{
 		{
 			"quiet",
@@ -65,6 +67,7 @@ func TestParseFlags(t *testing.T) {
 				Quiet:     true,
 				Verbosity: 0,
 			},
+			zerolog.ErrorLevel,
 		},
 		{
 			"quiet and verbosity",
@@ -73,14 +76,48 @@ func TestParseFlags(t *testing.T) {
 				Quiet:     true,
 				Verbosity: 0,
 			},
+			zerolog.ErrorLevel,
 		},
 		{
-			"quiet and verbosity",
+			"force",
 			[]string{"-f"},
 			&FlagsState{
 				Force:     true,
 				Verbosity: 1,
 			},
+			zerolog.WarnLevel,
+		},
+		{
+			"zerolog info level",
+			[]string{"-v"},
+			&FlagsState{
+				Verbosity: 2,
+			},
+			zerolog.InfoLevel,
+		},
+		{
+			"zerolog debug level",
+			[]string{"-vv"},
+			&FlagsState{
+				Verbosity: 3,
+			},
+			zerolog.DebugLevel,
+		},
+		{
+			"zerolog trace level",
+			[]string{"-vvv"},
+			&FlagsState{
+				Verbosity: 4,
+			},
+			zerolog.TraceLevel,
+		},
+		{
+			"too many verbosity levels",
+			[]string{"-vvvvv"},
+			&FlagsState{
+				Verbosity: 6,
+			},
+			zerolog.TraceLevel,
 		},
 		{
 			"config path",
@@ -89,6 +126,7 @@ func TestParseFlags(t *testing.T) {
 				ConfigPath: "grab.hcl",
 				Verbosity:  1,
 			},
+			zerolog.WarnLevel,
 		},
 	}
 
@@ -104,6 +142,7 @@ func TestParseFlags(t *testing.T) {
 			if !reflect.DeepEqual(g.Flags, tt.Want) {
 				tc.Errorf("got: %+v, want: %+v", g.Flags, tt.Want)
 			}
+
 		})
 	}
 }
@@ -288,7 +327,31 @@ site "example" {
 			ConfigFilePath: filepath.Join(root, "test", "grab.hcl"),
 			Config: `
 global {
-	location = "` + filepath.Join("~user", "Downloads", "grab") + `"
+	location = "` + tu.EscapeHCLString(filepath.Join("~user", "Downloads", "grab")) + `"
+}
+
+site "example" {
+	test = "testPattern"
+
+	asset "image" {
+		pattern = "assetPattern"
+		capture = 0
+	}
+}`,
+			WantConfig:     nil,
+			WantRegexCache: config.RegexCacheMap(nil),
+			WantErr:        true,
+		},
+		{
+			Name: "cannot read config file",
+			Flags: &FlagsState{
+				ConfigPath: filepath.Join(root, "test", "file_not_readable.txt"),
+			},
+			Wd:             filepath.Join(root, "test"),
+			ConfigFilePath: filepath.Join(root, "test", "file_not_readable.txt"),
+			Config: `
+global {
+	location = "` + tu.EscapeHCLString(filepath.Join("~user", "Downloads", "grab")) + `"
 }
 
 site "example" {

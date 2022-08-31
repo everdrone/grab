@@ -73,7 +73,7 @@ site "example" {
 		capture = 0
 	}
 }
-`,
+		`,
 			ConfigPath: filepath.Join(root, "grab.hcl"),
 			WantErr:    true,
 		},
