@@ -185,8 +185,9 @@ grab get https://example.com/gallery/1 \
 - [x] Network options with inheritance
 - [x] URL manipulation
 - [x] Destination manipulation
+- [x] Improve logging
+- [x] Check for updates
 - [ ] Display a progress bar
-- [ ] Improve logging
 - [ ] Add HCL eval context functions
 - [ ] Distribute via various package managers:
   - [ ] Homebrew
