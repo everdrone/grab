@@ -70,7 +70,7 @@ func (s *Grab) ParseConfig() *hcl.Diagnostics {
 	log.Trace().Str("path", s.Flags.ConfigPath).Msg("parsing config file")
 
 	// read file contents of config file
-	fc, err := utils.AFS.ReadFile(s.Flags.ConfigPath)
+	fc, err := utils.Io.ReadFile(utils.Fs, s.Flags.ConfigPath)
 	if err != nil {
 		return &hcl.Diagnostics{{
 			Severity: hcl.DiagError,

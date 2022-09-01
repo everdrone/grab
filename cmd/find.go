@@ -19,11 +19,7 @@ To specify a path use the --path flag.`,
 		return utils.Getwd()
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		startPath, err := cmd.Flags().GetString("path")
-		if err != nil {
-			cmd.PrintErrf("could not get path: %v\n", err)
-			return utils.ErrSilent
-		}
+		startPath, _ := cmd.Flags().GetString("path")
 
 		if startPath == "" {
 			startPath = utils.Wd
@@ -32,7 +28,7 @@ To specify a path use the --path flag.`,
 				startPath = utils.Abs(startPath)
 			}
 
-			if exists, err := utils.AFS.Exists(startPath); err != nil || !exists {
+			if exists, err := utils.Io.Exists(utils.Fs, startPath); err != nil || !exists {
 				cmd.PrintErrf("path does not exist: %s\n", startPath)
 				return utils.ErrSilent
 			}

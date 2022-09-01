@@ -79,7 +79,7 @@ site "example" {
 			WantErr: false,
 		},
 		{
-			Name:  "broken urls",
+			Name:  "broken urls strict",
 			Flags: &FlagsState{Strict: true},
 			Config: `
 global {
@@ -96,6 +96,25 @@ site "example" {
 }`,
 			Want:    map[string]string{},
 			WantErr: true,
+		},
+		{
+			Name:  "broken urls loose",
+			Flags: &FlagsState{},
+			Config: `
+global {
+	location = "` + escapedGlobal + `"
+}
+
+site "example" {
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
+	asset "broken" {
+		pattern = "<a href=\"([^\"]*/broken/[^\"]+)"
+		capture = 1
+		find_all = true
+	}
+}`,
+			Want:    map[string]string{},
+			WantErr: false,
 		},
 		{
 			Name:  "checks headers",
@@ -127,12 +146,96 @@ site "example" {
 			},
 			WantErr: false,
 		},
+		{
+			Name:  "write error",
+			Flags: &FlagsState{Strict: true},
+			Config: `
+global {
+	location = "` + tu.EscapeHCLString(filepath.Join(root, "restricted__w")) + `"
+}
+
+site "example" {
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
+
+	asset "secure" {
+		pattern = "<img src=\"([^\"]+/secure/[^\"]+)"
+		capture = 1
+		find_all = true
+
+		network {
+			headers = {
+				"custom_header" = "123"
+			}
+		}
+	}
+}`,
+			Want:    map[string]string{},
+			WantErr: true,
+		},
+		{
+			Name:  "info mkdir error",
+			Flags: &FlagsState{Strict: true},
+			Config: `
+global {
+	location = "` + tu.EscapeHCLString(filepath.Join(root, "restricted__m")) + `"
+}
+
+site "example" {
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
+
+	asset "secure" {
+		pattern = "<img src=\"([^\"]+/secure/[^\"]+)"
+		capture = 1
+		find_all = true
+
+		network {
+			headers = {
+				"custom_header" = "123"
+			}
+		}
+	}
+}`,
+			Want:    map[string]string{},
+			WantErr: true,
+		},
+		{
+			Name:  "fs exists error",
+			Flags: &FlagsState{Strict: true},
+			Config: `
+global {
+	location = "` + escapedGlobal + `"
+}
+
+site "example" {
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
+
+	asset "secure" {
+		pattern = "<a href=\"([^\"]+/restricted__e/[^\"]+)"
+		capture = 1
+		find_all = true
+
+		network {
+			headers = {
+				"custom_header" = "123"
+			}
+		}
+	}
+
+	subdirectory {
+		pattern = "restricted__e"
+		capture = 0
+		from    = body
+	}
+}`,
+			Want:    map[string]string{},
+			WantErr: false, // does not error but generates warnings
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(tc *testing.T) {
 			// create a fresh filesystem
-			utils.Fs, utils.AFS, utils.Wd = tu.SetupMemMapFs(root)
+			utils.Fs, utils.Io, utils.Wd = tu.SetupMemMapFs(root)
 
 			mock := createMockGetCmd()
 			g := New(mock)
@@ -160,7 +263,7 @@ site "example" {
 			}
 
 			for path, contents := range tt.Want {
-				got, err := utils.AFS.ReadFile(path)
+				got, err := utils.Io.ReadFile(utils.Fs, path)
 				if err != nil {
 					t.Fatalf("got error: %v", err)
 				}

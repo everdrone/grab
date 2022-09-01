@@ -371,8 +371,8 @@ site "example" {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(tc *testing.T) {
 			// create file system
-			utils.Fs, utils.AFS, utils.Wd = tu.SetupMemMapFs(root)
-			utils.AFS.WriteFile(tt.ConfigFilePath, []byte(tt.Config), os.ModePerm)
+			utils.Fs, utils.Io, utils.Wd = tu.SetupMemMapFs(root)
+			utils.Io.WriteFile(utils.Fs, tt.ConfigFilePath, []byte(tt.Config), os.ModePerm)
 
 			// set working directory
 			func() {
@@ -413,14 +413,14 @@ func TestParseURLs(t *testing.T) {
 	root := tu.GetOSRoot()
 
 	// create file system
-	utils.Fs, utils.AFS, utils.Wd = tu.SetupMemMapFs(root)
-	utils.AFS.MkdirAll(filepath.Join(root, "test"), os.ModePerm)
-	utils.AFS.WriteFile(filepath.Join(root, "test", "list.ini"), []byte(`# https://ignore.me.com/image1
+	utils.Fs, utils.Io, utils.Wd = tu.SetupMemMapFs(root)
+	utils.Fs.MkdirAll(filepath.Join(root, "test"), os.ModePerm)
+	utils.Io.WriteFile(utils.Fs, filepath.Join(root, "test", "list.ini"), []byte(`# https://ignore.me.com/image1
 https://example.com/gallery/test
    http://example.com/g2
 ; ignore this as well
 `), os.ModePerm)
-	utils.AFS.WriteFile(filepath.Join(root, "invalid.ini"), []byte(`; comment
+	utils.Io.WriteFile(utils.Fs, filepath.Join(root, "invalid.ini"), []byte(`; comment
 1https://example.com/gallery/test
 # comment 2
 `), os.ModePerm)

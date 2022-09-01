@@ -140,19 +140,19 @@ func TestGetURLsFromArgs(t *testing.T) {
 	}()
 
 	root := tu.GetOSRoot()
-	Fs, AFS, Wd = tu.SetupMemMapFs(root)
+	Fs, Io, Wd = tu.SetupMemMapFs(root)
 
 	Fs.MkdirAll(filepath.Join(root, "other", "directory"), os.ModePerm)
 	Fs.MkdirAll(filepath.Join(root, "tmp"), os.ModePerm)
-	AFS.WriteFile(filepath.Join(root, "file_not_readable.txt"), []byte("not readable"), os.ModePerm)
-	AFS.WriteFile(filepath.Join(root, "tmp", "list.ini"), []byte(`// https://example.com
+	Io.WriteFile(Fs, filepath.Join(root, "restricted__r.txt"), []byte("not readable"), os.ModePerm)
+	Io.WriteFile(Fs, filepath.Join(root, "tmp", "list.ini"), []byte(`// https://example.com
 https://example.com
 https://more.com?foo=bar#baz
 ;https://example.com
 
 # this is ignored as well
 `), os.ModePerm)
-	AFS.WriteFile(filepath.Join(root, "tmp", "invalid.ini"), []byte(`// https://example.com
+	Io.WriteFile(Fs, filepath.Join(root, "tmp", "invalid.ini"), []byte(`// https://example.com
 \x000
 ;https://example.com
 
@@ -232,13 +232,13 @@ https://more.com?foo=bar#baz
 		},
 		{
 			Name: "file not readable",
-			Args: []string{"file_not_readable.txt"},
+			Args: []string{"restricted__r.txt"},
 			Want: []string{},
 			WantDiags: hcl.Diagnostics{
 				&hcl.Diagnostic{
 					Severity: hcl.DiagError,
 					Summary:  "Could not read file",
-					Detail:   "Could not read file '" + filepath.Join(root, "file_not_readable.txt") + "'.",
+					Detail:   "Could not read file '" + filepath.Join(root, "restricted__r.txt") + "'.",
 				},
 			},
 		},

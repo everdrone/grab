@@ -46,7 +46,7 @@ func (s *Grab) Download() error {
 
 		for subdirectory, infoMap := range site.InfoMap {
 			// create directory
-			if err := utils.AFS.MkdirAll(subdirectory, os.ModePerm); err != nil {
+			if err := utils.Fs.MkdirAll(subdirectory, os.ModePerm); err != nil {
 				return &hcl.Diagnostics{{
 					Severity: hcl.DiagError,
 					Summary:  "Failed to create directory",
@@ -56,6 +56,7 @@ func (s *Grab) Download() error {
 
 			marshaled, err := json.MarshalIndent(infoMap, "", "  ")
 			if err != nil {
+				// this should never happen, since infoMap is encodable
 				return &hcl.Diagnostics{{
 					Severity: hcl.DiagError,
 					Summary:  "Failed to marshal info",
@@ -67,7 +68,7 @@ func (s *Grab) Download() error {
 
 			log.Info().Str("destination", dst).Msg("indexing")
 
-			if err := utils.AFS.WriteFile(dst, marshaled, os.ModePerm); err != nil {
+			if err := utils.Io.WriteFile(utils.Fs, dst, marshaled, os.ModePerm); err != nil {
 				return &hcl.Diagnostics{{
 					Severity: hcl.DiagError,
 					Summary:  "Failed to write info file",
@@ -82,7 +83,7 @@ func (s *Grab) Download() error {
 			for src, dst := range asset.Downloads {
 				// create directory
 				dir := filepath.Dir(dst)
-				if err := utils.AFS.MkdirAll(dir, os.ModePerm); err != nil {
+				if err := utils.Fs.MkdirAll(dir, os.ModePerm); err != nil {
 					return &hcl.Diagnostics{{
 						Severity: hcl.DiagError,
 						Summary:  "Failed to create directory",
@@ -96,7 +97,7 @@ func (s *Grab) Download() error {
 
 				// check if file exists
 				performWrite := true
-				if exists, err := utils.AFS.Exists(dst); err != nil || exists {
+				if exists, err := utils.Io.Exists(utils.Fs, dst); err != nil || exists {
 					performWrite = false
 				}
 

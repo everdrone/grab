@@ -64,7 +64,7 @@ func GetURLsFromArgs(args []string) ([]string, hcl.Diagnostics) {
 		} else {
 			// not valid, check if it's a file
 			absolute := Abs(arg)
-			exists, err := AFS.Exists(absolute)
+			exists, err := Io.Exists(Fs, absolute)
 			if err != nil || !exists {
 				return nil, hcl.Diagnostics{&hcl.Diagnostic{
 					Severity: hcl.DiagError,
@@ -74,7 +74,7 @@ func GetURLsFromArgs(args []string) ([]string, hcl.Diagnostics) {
 			}
 
 			// we got a file, parse it
-			fc, err := AFS.ReadFile(absolute)
+			fc, err := Io.ReadFile(Fs, absolute)
 			if err != nil {
 				return nil, hcl.Diagnostics{&hcl.Diagnostic{
 					Severity: hcl.DiagError,

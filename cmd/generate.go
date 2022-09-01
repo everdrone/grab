@@ -52,7 +52,7 @@ var GenerateCmd = &cobra.Command{
 		}
 
 		outPath := filepath.Join(utils.Wd, "grab.hcl")
-		if err = utils.AFS.WriteFile(outPath, buffer.Bytes(), os.ModePerm); err != nil {
+		if err = utils.Io.WriteFile(utils.Fs, outPath, buffer.Bytes(), os.ModePerm); err != nil {
 			cmd.PrintErrf("could not write config to file: %v\n", err)
 			return utils.ErrSilent
 		}

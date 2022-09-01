@@ -57,6 +57,11 @@ const htmlPage string = `<!DOCTYPE html>
   </div>
   <a href="{{ .Base }}/broken/1.jpg">absolutely broken</a>
   <a href="/broken/2.jpg">relatively broken</a>
+  <a href="{{ .Base }}/restricted__m/a.jpg">fails Mkdir</a>
+  <a href="{{ .Base }}/restricted__w/b.jpg">fails WriteFile</a>
+  <a href="{{ .Base }}/restricted__e/b.jpg">fails WriteFile</a>
+  <a href="1https://something.com/bad_url/b.jpg">fails WriteFile</a>
+  <a href="with spaces ://bad_relative_url/b.jpg">fails WriteFile</a>
 </body>
 </html>`
 
@@ -142,6 +147,16 @@ func CreateMockServer() *echo.Echo {
 	})
 
 	e.GET("/bad_releases", func(c echo.Context) error {
+		return c.NoContent(http.StatusNotFound)
+	})
+
+	e.GET("/restricted__*", func(c echo.Context) error {
+		for _, id := range []string{"a", "b", "c"} {
+			if c.Param("id") == id+".jpg" {
+				return c.String(http.StatusOK, "image"+id)
+			}
+		}
+
 		return c.NoContent(http.StatusNotFound)
 	})
 

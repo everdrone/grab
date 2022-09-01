@@ -169,8 +169,8 @@ func TestDownload(t *testing.T) {
 					ts.ServeHTTP(w, r)
 				})
 			},
-			Path:     []string{"net", "file_not_writable.txt"},
-			Dest:     filepath.Join(root, "net", "file_not_writable.txt"),
+			Path:     []string{"net", "file.txt"},
+			Dest:     filepath.Join(root, "restricted__w", "file.txt"),
 			HasError: true,
 			Options:  defaultOptions,
 		},
@@ -179,9 +179,8 @@ func TestDownload(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(tc *testing.T) {
 			// start fresh for each test case
-			utils.Fs, utils.AFS, utils.Wd = tu.SetupMemMapFs(root)
-			utils.AFS.WriteFile(filepath.Join(root, "net", "file.txt"), []byte("binary"), os.ModePerm)
-			utils.AFS.WriteFile(filepath.Join(root, "net", "file_not_writable.txt"), []byte("binary"), os.ModePerm)
+			utils.Fs, utils.Io, utils.Wd = tu.SetupMemMapFs(root)
+			utils.Io.WriteFile(utils.Fs, filepath.Join(root, "net", "file.txt"), []byte("binary"), os.ModePerm)
 			httpFs := afero.NewHttpFs(utils.Fs)
 
 			// start the server
@@ -238,7 +237,7 @@ func TestDownload(t *testing.T) {
 }
 
 func getHash(filename string) ([]byte, error) {
-	f, err := utils.AFS.Open(filename)
+	f, err := utils.Fs.Open(filename)
 	if err != nil {
 		return nil, err
 	}
