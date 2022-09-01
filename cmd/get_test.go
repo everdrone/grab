@@ -57,26 +57,26 @@ site "example" {
 			ConfigPath: filepath.Join(root, "grab.hcl"),
 			WantErr:    true,
 		},
-		// 		{ // XXX: this test fails only on github!
-		// 			Name: "invalid url",
-		// 			Args: []string{"1http://anything.com/fails"},
-		// 			Config: `
-		// global {
-		// 	location = "` + escapedGlobalLocation + `"
-		// }
+		{
+			Name: "invalid url",
+			Args: []string{"1http://anything.com/fails"},
+			Config: `
+global {
+	location = "` + escapedGlobalLocation + `"
+}
 
-		// site "example" {
-		// 	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
+site "example" {
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
 
-		// 	asset "image" {
-		// 		pattern = "dummy"
-		// 		capture = 0
-		// 	}
-		// }
-		// 		`,
-		// 			ConfigPath: filepath.Join(root, "grab.hcl"),
-		// 			WantErr:    true,
-		// 		},
+	asset "image" {
+		pattern = "dummy"
+		capture = 0
+	}
+}
+		`,
+			ConfigPath: filepath.Join(root, "grab.hcl"),
+			WantErr:    true,
+		},
 		{
 			Name: "strict stops during build asset cache",
 			Args: []string{ts.URL + "/givesNotFound", "-s"},

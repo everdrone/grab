@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/everdrone/grab/internal/config"
 	"github.com/everdrone/grab/internal/net"
 	"golang.org/x/mod/semver"
 )
 
-func CheckForUpdates() (string, error) {
-	resp, err := net.Fetch(config.LatestReleaseURL, &net.FetchOptions{
+func CheckForUpdates(current, releaseURL string) (string, error) {
+	resp, err := net.Fetch(releaseURL, &net.FetchOptions{
 		Headers: map[string]string{
 			"Accept": "application/vnd.github+json",
 		},
@@ -42,9 +41,9 @@ func CheckForUpdates() (string, error) {
 			return "", fmt.Errorf("invalid version: %s", latest)
 		}
 
-		current := "v" + config.Version
+		prefixed := "v" + current
 
-		if semver.Compare(latest, current) == 1 {
+		if semver.Compare(latest, prefixed) == 1 {
 			return strings.TrimPrefix(latest, "v"), nil
 		}
 	} else {

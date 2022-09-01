@@ -20,14 +20,20 @@ var GetCmd = &cobra.Command{
 
 		updateMessageChan := make(chan string)
 		go func() {
-			newVersion, _ := update.CheckForUpdates()
+			newVersion, err := update.CheckForUpdates(config.Version, config.LatestReleaseURL)
+			if err != nil {
+				updateMessageChan <- ""
+			}
+
 			updateMessageChan <- newVersion
 		}()
+		// FIXME: this is not concurrent! see fixme below
+		latest := <-updateMessageChan
 
 		g := instance.New(cmd)
-
 		g.ParseFlags()
 
+		// FIXME: if we put latest := <-updateMessageChan here, it will cause a race condition! why?
 		if diags := g.ParseConfig(); diags.HasErrors() {
 			for _, diag := range diags.Errs() {
 				log.Err(diag).Msg("config error")
@@ -43,7 +49,6 @@ var GetCmd = &cobra.Command{
 		}
 
 		g.BuildSiteCache()
-
 		if diags := g.BuildAssetCache(); diags.HasErrors() {
 			for _, diag := range diags.Errs() {
 				log.Err(diag).Msg("runtime error")
@@ -55,15 +60,14 @@ var GetCmd = &cobra.Command{
 			return utils.ErrSilent
 		}
 
-		newVersion := <-updateMessageChan
-		if newVersion != "" {
+		if latest != "" {
 			// TODO: take in account possible package managers
 			// if for example we installed with homebrew, we should display a different message
 			cmd.Printf("\n\n%s %s → %s\n",
 				color.New(color.FgMagenta).Sprintf("A new release of %s is available:", config.Name),
 				config.Version,
 				// color.New(color.FgHiBlack).Sprint(config.Version),
-				color.New(color.FgCyan).Sprint(newVersion),
+				color.New(color.FgCyan).Sprint(latest),
 			)
 			cmd.Printf("%s\n\n", "https://github.com/everdrone/grab/releases/latest")
 		}
