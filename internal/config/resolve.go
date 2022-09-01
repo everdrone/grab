@@ -32,7 +32,7 @@ func Resolve(filename, path string) (string, error) {
 	for _, ancestor := range ancestors {
 		current := filepath.Join(ancestor, filename)
 
-		exists, err := utils.AFS.Exists(current)
+		exists, err := utils.Io.Exists(utils.Fs, current)
 		if err != nil {
 			return "", fmt.Errorf("could not check existence of %q: %s", current, err)
 		}

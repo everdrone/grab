@@ -430,6 +430,136 @@ site "example" {
 			WantErr: false,
 		},
 		{
+			Name:  "bad subdirectory capture group",
+			Flags: &FlagsState{},
+			URLs:  []string{ts.URL + testPath},
+			Config: `
+global {
+	location = "` + tu.EscapeHCLString(globalLocation) + `"
+}
+
+site "example" {
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
+	asset "image" {
+		pattern = "<img src=\"([^\"]+/img/[^\"]+)"
+		capture = 1
+		find_all = true
+	}
+
+	subdirectory {
+		pattern = "\\/gallery\\/(\\d+)"
+		capture = 12
+		from = url
+	}
+}`,
+			Want: &config.Config{
+				Sites: []config.SiteConfig{
+					{
+						Assets: []config.AssetConfig{
+							{
+								Downloads: nil,
+							},
+						},
+					},
+				},
+			},
+			WantErr: true,
+		},
+		{
+			Name:  "bad asset capture group",
+			Flags: &FlagsState{},
+			URLs:  []string{ts.URL + testPath},
+			Config: `
+global {
+	location = "` + tu.EscapeHCLString(globalLocation) + `"
+}
+
+site "example" {
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
+	asset "image" {
+		pattern = "<img src=\"([^\"]+/img/[^\"]+)"
+		capture = "name"
+		find_all = true
+	}
+}`,
+			Want: &config.Config{
+				Sites: []config.SiteConfig{
+					{
+						Assets: []config.AssetConfig{
+							{
+								Downloads: nil,
+							},
+						},
+					},
+				},
+			},
+			WantErr: true,
+		},
+		{
+			Name:  "bad captured url",
+			Flags: &FlagsState{},
+			URLs:  []string{ts.URL + testPath},
+			Config: `
+global {
+	location = "` + tu.EscapeHCLString(globalLocation) + `"
+}
+
+site "example" {
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
+	asset "image" {
+		pattern = "<a href=\"([^\"]+/bad_url/[^\"]+)"
+		capture = 1
+		find_all = true
+	}
+}`,
+			Want: &config.Config{
+				Sites: []config.SiteConfig{
+					{
+						Assets: []config.AssetConfig{
+							{
+								Downloads: nil,
+							},
+						},
+					},
+				},
+			},
+			WantErr: true,
+		},
+		{
+			Name:  "bad info capture",
+			Flags: &FlagsState{},
+			URLs:  []string{ts.URL + testPath},
+			Config: `
+global {
+	location = "` + tu.EscapeHCLString(globalLocation) + `"
+}
+
+site "example" {
+	test = "http:\\/\\/127\\.0\\.0\\.1:\\d+"
+	info "author" {
+		pattern = "Author: @(?P<username>[^<]+)"
+		capture = "username"
+	}
+
+	info "title" {
+		pattern = "<title>([^<]+)"
+		capture = 3
+	}
+}`,
+			Want: &config.Config{
+				Sites: []config.SiteConfig{
+					{
+						Assets: []config.AssetConfig{
+							{
+								Downloads: nil,
+							},
+						},
+					},
+				},
+			},
+			WantErr: true,
+		},
+		{
 			Name:  "subdirectory from body",
 			Flags: &FlagsState{},
 			URLs:  []string{ts.URL + testPath},

@@ -161,18 +161,26 @@ func TestDownload(t *testing.T) {
 			HasError:  true,
 			Options:   defaultOptions,
 		},
-		// {
-		// 	Name: "invalid url",
-		// },
-		// FIXME: afero's memMapFs.Create doesn't return an error!
-		// see: https://github.com/spf13/afero/blob/2a70f2bb2db1524bf2aa3ca0cfebefa8d6367b7b/memmap_test.go#L65
+		{
+			Name: "cannot write file",
+			Handler: func(fs http.FileSystem) http.Handler {
+				ts := http.FileServer(fs)
+				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					ts.ServeHTTP(w, r)
+				})
+			},
+			Path:     []string{"net", "file.txt"},
+			Dest:     filepath.Join(root, "restricted__w", "file.txt"),
+			HasError: true,
+			Options:  defaultOptions,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(tc *testing.T) {
 			// start fresh for each test case
-			utils.Fs, utils.AFS, utils.Wd = tu.SetupMemMapFs(root)
-			utils.AFS.WriteFile(filepath.Join(root, "net", "file.txt"), []byte("binary"), os.ModePerm)
+			utils.Fs, utils.Io, utils.Wd = tu.SetupMemMapFs(root)
+			utils.Io.WriteFile(utils.Fs, filepath.Join(root, "net", "file.txt"), []byte("binary"), os.ModePerm)
 			httpFs := afero.NewHttpFs(utils.Fs)
 
 			// start the server
@@ -229,7 +237,7 @@ func TestDownload(t *testing.T) {
 }
 
 func getHash(filename string) ([]byte, error) {
-	f, err := utils.AFS.Open(filename)
+	f, err := utils.Fs.Open(filename)
 	if err != nil {
 		return nil, err
 	}

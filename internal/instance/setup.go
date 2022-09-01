@@ -6,6 +6,8 @@ import (
 	"github.com/everdrone/grab/internal/config"
 	"github.com/everdrone/grab/internal/utils"
 	"github.com/mitchellh/go-homedir"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"github.com/hashicorp/hcl/v2"
 )
@@ -29,11 +31,28 @@ func (s *Grab) ParseFlags() {
 		flags.Verbosity++
 	}
 
+	switch flags.Verbosity {
+	case 0:
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+	case 1:
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+	case 2:
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	case 3:
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	case 4:
+		zerolog.SetGlobalLevel(zerolog.TraceLevel)
+	default:
+		zerolog.SetGlobalLevel(zerolog.TraceLevel)
+	}
+
 	s.Flags = flags
 }
 
 func (s *Grab) ParseConfig() *hcl.Diagnostics {
 	if s.Flags.ConfigPath == "" {
+		log.Trace().Msg("no config file specified, resolving")
+
 		resolved, err := config.Resolve("grab.hcl", utils.Wd)
 		if err != nil {
 			return &hcl.Diagnostics{{
@@ -43,11 +62,15 @@ func (s *Grab) ParseConfig() *hcl.Diagnostics {
 			}}
 		}
 
+		log.Debug().Str("path", resolved).Msg("using config file")
+
 		s.Flags.ConfigPath = resolved
 	}
 
+	log.Trace().Str("path", s.Flags.ConfigPath).Msg("parsing config file")
+
 	// read file contents of config file
-	fc, err := utils.AFS.ReadFile(s.Flags.ConfigPath)
+	fc, err := utils.Io.ReadFile(utils.Fs, s.Flags.ConfigPath)
 	if err != nil {
 		return &hcl.Diagnostics{{
 			Severity: hcl.DiagError,
@@ -75,6 +98,7 @@ func (s *Grab) ParseConfig() *hcl.Diagnostics {
 				Detail:   err.Error(),
 			}}
 		}
+
 		if filepath.IsAbs(expanded) {
 			s.Config.Global.Location = expanded
 		} else {
@@ -86,7 +110,8 @@ func (s *Grab) ParseConfig() *hcl.Diagnostics {
 }
 
 func (s *Grab) ParseURLs(args []string) *hcl.Diagnostics {
-	// gather urls from positional args
+	log.Trace().Msg("parsing arguments")
+
 	args = utils.Unique(args)
 
 	urls, diags := utils.GetURLsFromArgs(args)
@@ -95,6 +120,8 @@ func (s *Grab) ParseURLs(args []string) *hcl.Diagnostics {
 	}
 
 	s.URLs = utils.Unique(urls)
+
+	log.Trace().Strs("urls", s.URLs).Msgf("found %d %s", len(s.URLs), utils.Plural(len(s.URLs), "url", "urls"))
 
 	return &hcl.Diagnostics{}
 }

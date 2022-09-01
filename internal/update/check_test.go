@@ -89,9 +89,7 @@ func TestCheckForUpdates(t *testing.T) {
 			// start the test server
 			ts := httptest.NewServer(http.HandlerFunc(tt.handler))
 
-			config.LatestReleaseURL = ts.URL
-
-			got, err := CheckForUpdates()
+			got, err := CheckForUpdates(config.Version, ts.URL)
 			if (err != nil) != tt.wantErr {
 				tc.Errorf("got error: '%v', want error: '%v'", err, tt.wantErr)
 			}

@@ -33,6 +33,12 @@ func TestGenerate(t *testing.T) {
 			CheckFile: filepath.Join(root, "test", "grab.hcl"),
 		},
 		{
+			Name:      "write permission error",
+			Wd:        filepath.Join(root, "restricted__w"),
+			HasErrors: true,
+			Want:      ``,
+		},
+		{
 			Name:      "stdout",
 			Args:      []string{"--stdout"},
 			Wd:        filepath.Join(root, "test"),
@@ -45,7 +51,7 @@ func TestGenerate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(tc *testing.T) {
-			utils.Fs, utils.AFS, utils.Wd = tu.SetupMemMapFs(root)
+			utils.Fs, utils.Io, utils.Wd = tu.SetupMemMapFs(root)
 			utils.Fs.MkdirAll(filepath.Join(root, "test"), os.ModePerm)
 
 			func() {
@@ -63,7 +69,7 @@ func TestGenerate(t *testing.T) {
 			}
 
 			if tt.CheckFile != "" {
-				gotFile, err := utils.AFS.ReadFile(tt.CheckFile)
+				gotFile, err := utils.Io.ReadFile(utils.Fs, tt.CheckFile)
 				if err != nil {
 					tc.Errorf("could not read file: %v", err)
 				}

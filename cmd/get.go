@@ -6,6 +6,7 @@ import (
 	"github.com/everdrone/grab/internal/update"
 	"github.com/everdrone/grab/internal/utils"
 	"github.com/fatih/color"
+	"github.com/rs/zerolog/log"
 
 	"github.com/spf13/cobra"
 )
@@ -15,47 +16,56 @@ var GetCmd = &cobra.Command{
 	Short: "Scrape and download assets from a URL, a file or a both",
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		updateMessageChan := make(chan string)
-		go func() {
-			newVersion, _ := update.CheckForUpdates()
-			updateMessageChan <- newVersion
-		}()
+		log.Logger = instance.DefaultLogger(cmd.OutOrStderr())
 
 		g := instance.New(cmd)
-
 		g.ParseFlags()
 
 		if diags := g.ParseConfig(); diags.HasErrors() {
-			g.Log(0, *diags)
+			for _, diag := range diags.Errs() {
+				log.Err(diag).Msg("config error")
+			}
 			return utils.ErrSilent
 		}
 
 		if diags := g.ParseURLs(args); diags.HasErrors() {
-			g.Log(0, *diags)
+			for _, diag := range diags.Errs() {
+				log.Err(diag).Msg("argument error")
+			}
 			return utils.ErrSilent
 		}
+
+		updateMessageChan := make(chan string)
+		go func() {
+			newVersion, err := update.CheckForUpdates(config.Version, config.LatestReleaseURL)
+			if err != nil {
+				updateMessageChan <- ""
+			}
+
+			updateMessageChan <- newVersion
+		}()
 
 		g.BuildSiteCache()
-
 		if diags := g.BuildAssetCache(); diags.HasErrors() {
-			g.Log(0, *diags)
+			for _, diag := range diags.Errs() {
+				log.Err(diag).Msg("runtime error")
+			}
 			return utils.ErrSilent
 		}
 
-		if diags := g.Download(); diags.HasErrors() {
-			g.Log(0, *diags)
+		if err := g.Download(); err != nil {
 			return utils.ErrSilent
 		}
 
-		newVersion := <-updateMessageChan
-		if newVersion != "" {
+		latest := <-updateMessageChan
+		if latest != "" {
 			// TODO: take in account possible package managers
 			// if for example we installed with homebrew, we should display a different message
 			cmd.Printf("\n\n%s %s → %s\n",
 				color.New(color.FgMagenta).Sprintf("A new release of %s is available:", config.Name),
 				config.Version,
 				// color.New(color.FgHiBlack).Sprint(config.Version),
-				color.New(color.FgCyan).Sprint(newVersion),
+				color.New(color.FgCyan).Sprint(latest),
 			)
 			cmd.Printf("%s\n\n", "https://github.com/everdrone/grab/releases/latest")
 		}

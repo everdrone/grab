@@ -44,12 +44,12 @@ func TestCheckCmd(t *testing.T) {
 	}()
 
 	root := tu.GetOSRoot()
-	utils.Fs, utils.AFS, utils.Wd = tu.SetupMemMapFs(root)
+	utils.Fs, utils.Io, utils.Wd = tu.SetupMemMapFs(root)
 
 	utils.Fs.MkdirAll("/other/directory", os.ModePerm)
 	utils.Fs.MkdirAll("/tmp/test/config/nested", os.ModePerm)
-	utils.AFS.WriteFile("/tmp/test/config/grab.hcl", []byte(fileOk), os.ModePerm)
-	utils.AFS.WriteFile("/tmp/test/config/invalid.hcl", []byte(fileInvalid), os.ModePerm)
+	utils.Io.WriteFile(utils.Fs, "/tmp/test/config/grab.hcl", []byte(fileOk), os.ModePerm)
+	utils.Io.WriteFile(utils.Fs, "/tmp/test/config/invalid.hcl", []byte(fileInvalid), os.ModePerm)
 
 	tests := []struct {
 		Name         string

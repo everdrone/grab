@@ -14,7 +14,7 @@ var VersionCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		updateMessageChan := make(chan string)
 		go func() {
-			newVersion, _ := update.CheckForUpdates()
+			newVersion, _ := update.CheckForUpdates(config.Version, config.LatestReleaseURL)
 			updateMessageChan <- newVersion
 		}()
 
@@ -25,15 +25,15 @@ var VersionCmd = &cobra.Command{
 			config.BuildArch,
 			config.CommitHash[:7])
 
-		newVersion := <-updateMessageChan
-		if newVersion != "" {
+		latest := <-updateMessageChan
+		if latest != "" {
 			// TODO: take in account possible package managers
 			// if for example we installed with homebrew, we should display a different message
 			cmd.Printf("\n\n%s %s → %s\n",
 				color.New(color.FgMagenta).Sprintf("A new release of %s is available:", config.Name),
 				config.Version,
 				// color.New(color.FgHiBlack).Sprint(config.Version),
-				color.New(color.FgCyan).Sprint(newVersion),
+				color.New(color.FgCyan).Sprint(latest),
 			)
 			cmd.Printf("%s\n\n", "https://github.com/everdrone/grab/releases/latest")
 		}

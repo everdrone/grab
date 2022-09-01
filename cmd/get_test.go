@@ -73,7 +73,7 @@ site "example" {
 		capture = 0
 	}
 }
-`,
+		`,
 			ConfigPath: filepath.Join(root, "grab.hcl"),
 			WantErr:    true,
 		},
@@ -181,11 +181,11 @@ site "example" {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(tc *testing.T) {
 			// reset fs
-			utils.Fs, utils.AFS, utils.Wd = tu.SetupMemMapFs(root)
+			utils.Fs, utils.Io, utils.Wd = tu.SetupMemMapFs(root)
 
 			// create config file and global dir
-			utils.AFS.MkdirAll(globalLocation, os.ModePerm)
-			utils.AFS.WriteFile(tt.ConfigPath, []byte(tt.Config), os.ModePerm)
+			utils.Fs.MkdirAll(globalLocation, os.ModePerm)
+			utils.Io.WriteFile(utils.Fs, tt.ConfigPath, []byte(tt.Config), os.ModePerm)
 
 			// set releases url
 			config.LatestReleaseURL = ts.URL + "/releases"
@@ -201,7 +201,7 @@ site "example" {
 
 			if tt.CheckFiles != nil {
 				for f, v := range tt.CheckFiles {
-					if got, _ := utils.AFS.ReadFile(f); string(got) != v {
+					if got, _ := utils.Io.ReadFile(utils.Fs, f); string(got) != v {
 						tc.Fatalf("got: %s, want: %s", string(got), v)
 					}
 				}

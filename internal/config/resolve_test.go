@@ -20,11 +20,11 @@ func TestResolve(t *testing.T) {
 	// we need to use a fake root directory for testing on windows, since filepath.Join() will not work with "\\"
 	root := tu.GetOSRoot()
 
-	utils.Fs, utils.AFS, utils.Wd = tu.SetupMemMapFs(root)
+	utils.Fs, utils.Io, utils.Wd = tu.SetupMemMapFs(root)
 
 	utils.Fs.MkdirAll(filepath.Join(root, "other", "directory"), os.ModePerm)
 	utils.Fs.MkdirAll(filepath.Join(root, "tmp", "test", "config", "nested"), os.ModePerm)
-	utils.AFS.WriteFile(filepath.Join(root, "tmp", "test", "config", "grab.hcl"), []byte("something"), os.ModePerm)
+	utils.Io.WriteFile(utils.Fs, filepath.Join(root, "tmp", "test", "config", "grab.hcl"), []byte("something"), os.ModePerm)
 
 	tests := []struct {
 		Name     string
@@ -60,6 +60,13 @@ func TestResolve(t *testing.T) {
 			Filename: "\000x",
 			Want:     "",
 			Err:      "could not resolve \000x",
+		},
+		{
+			Name:     "cannot stat",
+			Wd:       filepath.Join(root, "tmp", "test", "config", "restricted__e"),
+			Filename: "grab.hcl",
+			Want:     "",
+			Err:      "could not check existence of",
 		},
 	}
 
