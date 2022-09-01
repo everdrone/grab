@@ -18,22 +18,9 @@ var GetCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log.Logger = instance.DefaultLogger(cmd.OutOrStderr())
 
-		updateMessageChan := make(chan string)
-		go func() {
-			newVersion, err := update.CheckForUpdates(config.Version, config.LatestReleaseURL)
-			if err != nil {
-				updateMessageChan <- ""
-			}
-
-			updateMessageChan <- newVersion
-		}()
-		// FIXME: this is not concurrent! see fixme below
-		latest := <-updateMessageChan
-
 		g := instance.New(cmd)
 		g.ParseFlags()
 
-		// FIXME: if we put latest := <-updateMessageChan here, it will cause a race condition! why?
 		if diags := g.ParseConfig(); diags.HasErrors() {
 			for _, diag := range diags.Errs() {
 				log.Err(diag).Msg("config error")
@@ -48,6 +35,16 @@ var GetCmd = &cobra.Command{
 			return utils.ErrSilent
 		}
 
+		updateMessageChan := make(chan string)
+		go func() {
+			newVersion, err := update.CheckForUpdates(config.Version, config.LatestReleaseURL)
+			if err != nil {
+				updateMessageChan <- ""
+			}
+
+			updateMessageChan <- newVersion
+		}()
+
 		g.BuildSiteCache()
 		if diags := g.BuildAssetCache(); diags.HasErrors() {
 			for _, diag := range diags.Errs() {
@@ -60,6 +57,7 @@ var GetCmd = &cobra.Command{
 			return utils.ErrSilent
 		}
 
+		latest := <-updateMessageChan
 		if latest != "" {
 			// TODO: take in account possible package managers
 			// if for example we installed with homebrew, we should display a different message
