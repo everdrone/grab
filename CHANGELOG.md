@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.6](https://github.com/everdrone/grab/compare/v0.1.5...v0.1.6) (2022-09-01)
+
+
+### Features
+
+* better logging, add zerolog ([f48d6dd](https://github.com/everdrone/grab/commit/f48d6dda453f431594d6c80285e5043aca601723))
+* checks for updates using github api ([f2a417e](https://github.com/everdrone/grab/commit/f2a417ebc40c518be17bfc797d8022859a2bec50))
+
+
+### Bug Fixes
+
+* make latest version check concurrent ([4a13fd8](https://github.com/everdrone/grab/commit/4a13fd8f2cbbc339234c3c6aa01f8746d99e46f0))
+* make update notification parallel to download ([64384d9](https://github.com/everdrone/grab/commit/64384d98271f813ee956373b697aed6185dd1116))
+* replace ioutil with io (SA1019) ([b5895df](https://github.com/everdrone/grab/commit/b5895dfcd0fdc9feb3d092b76e0e89e4ac5c19cc))
+
 ### [0.1.5](https://github.com/everdrone/grab/compare/v0.1.4...v0.1.5) (2022-08-21)
 
 

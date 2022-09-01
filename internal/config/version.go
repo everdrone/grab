@@ -2,7 +2,7 @@ package config
 
 const Name = "grab"
 
-const Version = "0.1.5"
+const Version = "0.1.6"
 
 var CommitHash = "unknown"
 var BuildType = "devel"
