@@ -12,13 +12,30 @@ jobs:
         platform: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v1
-
       - name: Install Go
         uses: actions/setup-go@v3
         with:
           go-version-file: go.mod
+
+      - name: Setup Golang caches
+        uses: actions/cache@v3
+        with:
+          # In order:
+          # * Module download cache
+          # * Build cache (Linux)
+          # * Build cache (Mac)
+          # * Build cache (Windows)
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            ~\AppData\Local\go-build
+          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ matrix.go-version }}-
+
+      - name: Checkout
+        uses: actions/checkout@v1
 
       - name: Vet
         run: go vet ./...
@@ -40,7 +57,7 @@ jobs:
         arch: [amd64, arm64]
     runs-on: ubuntu-latest
     env:
-      GO111MODULE: "on"
+      GO111MODULE: 'on'
       TARGET_GOOS: ${{ matrix.os }}
       TARGET_GOARCH: ${{ matrix.arch }}
     steps:
