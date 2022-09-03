@@ -8,11 +8,10 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
-func DefaultLogger(w io.Writer) zerolog.Logger {
-	return log.Output(zerolog.ConsoleWriter{
+func DefaultLogger(w io.Writer) zerolog.ConsoleWriter {
+	return zerolog.ConsoleWriter{
 		Out:             w,
 		TimeFormat:      time.RFC3339Nano,
 		FormatTimestamp: func(i interface{}) string { return "" },
@@ -62,13 +61,5 @@ func DefaultLogger(w io.Writer) zerolog.Logger {
 		FormatMessage: func(i interface{}) string {
 			return fmt.Sprintf("%s", i)
 		},
-	})
+	}
 }
-
-/*
-╷ Error: Something bad happened
-│   Description of the error, here we can be more detailed
-╵   something.hcl:2-3
-╷ Error: Something bad happened
-╵   Description of the error, here we can be more detailed
-*/

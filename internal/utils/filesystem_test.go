@@ -116,3 +116,37 @@ func TestAbs(t *testing.T) {
 
 	resetWd()
 }
+
+func TestIoUtil(t *testing.T) {
+	initialWd, _ := os.Getwd()
+	defer func() {
+		_ = os.Chdir(initialWd)
+	}()
+
+	root := tu.GetOSRoot()
+	Fs = new(tu.MockFs)
+	Wd = root
+
+	// test writefile
+	if err := Io.WriteFile(Fs, "test.txt", []byte("test"), 0644); err != nil {
+		t.Fail()
+	}
+
+	// test readfile
+	if b, err := Io.ReadFile(Fs, "test.txt"); err != nil {
+		t.Fail()
+	} else {
+		if string(b) != "test" {
+			t.Fail()
+		}
+	}
+
+	// test exists
+	if exists, err := Io.Exists(Fs, "test.txt"); err != nil {
+		t.Fail()
+	} else {
+		if !exists {
+			t.Fail()
+		}
+	}
+}

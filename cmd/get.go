@@ -16,7 +16,7 @@ var GetCmd = &cobra.Command{
 	Short: "Scrape and download assets from a URL, a file or a both",
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		log.Logger = instance.DefaultLogger(cmd.OutOrStderr())
+		log.Logger = log.Output(instance.DefaultLogger(cmd.OutOrStderr()))
 
 		g := instance.New(cmd)
 		g.ParseFlags()
